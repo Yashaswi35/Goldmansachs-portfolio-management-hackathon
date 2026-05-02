@@ -1,0 +1,918 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Verso — Build your investor profile</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Fraunces:ital,opsz,wght@0,9..144,300;1,9..144,300&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --night:#080d1a;
+  --navy:#0d1428;
+  --navy2:#111c35;
+  --navy3:#162040;
+  --surface:#1b274a;
+  --gold:#e8b84b;
+  --gold-dim:rgba(232,184,75,.12);
+  --gold-border:rgba(232,184,75,.22);
+  --text:#eef1ff;
+  --text2:rgba(238,241,255,.55);
+  --text3:rgba(238,241,255,.28);
+  --border:rgba(255,255,255,.07);
+  --border2:rgba(255,255,255,.13);
+  --green:#3ecf8e;
+  --accent:#4f7fff;
+  --sans:'Geist',system-ui,sans-serif;
+  --serif:'Fraunces',Georgia,serif;
+}
+html{scroll-behavior:smooth}
+body{
+  background:var(--night);color:var(--text);
+  font-family:var(--sans);font-weight:400;
+  min-height:100vh;cursor:none;
+  -webkit-font-smoothing:antialiased;
+  display:flex;flex-direction:column;
+}
+
+/* ── CURSOR ── */
+#cur{position:fixed;width:10px;height:10px;background:var(--gold);border-radius:50%;pointer-events:none;z-index:9999;transform:translate(-50%,-50%);mix-blend-mode:normal;transition:width .15s,height .15s,border-radius .15s}
+#cur-ring{position:fixed;width:36px;height:36px;border:1.5px solid rgba(232,184,75,.25);border-radius:50%;pointer-events:none;z-index:9998;transform:translate(-50%,-50%)}
+body:has(button:hover) #cur,body:has(label:hover) #cur{width:44px;height:44px;border-radius:8px;opacity:.1}
+
+/* ── NAV ── */
+nav{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 48px;height:60px;
+  border-bottom:1px solid var(--border);
+  background:rgba(8,13,26,.9);
+  backdrop-filter:blur(16px);
+  position:sticky;top:0;z-index:100;
+}
+.logo{display:flex;align-items:center;gap:9px;text-decoration:none}
+.logo-mark{width:28px;height:28px;border-radius:8px;background:var(--gold);display:flex;align-items:center;justify-content:center}
+.logo-mark svg{width:13px;height:13px;stroke:var(--night);fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
+.logo-name{font-size:15px;font-weight:700;color:var(--text);letter-spacing:-.2px}
+.nav-right{font-size:13px;color:var(--text3)}
+.nav-right a{color:var(--text2);text-decoration:none;transition:color .15s}
+.nav-right a:hover{color:var(--text)}
+
+/* ── LAYOUT ── */
+.page{display:grid;grid-template-columns:1fr 420px;min-height:calc(100vh - 60px);flex:1}
+
+/* ── LEFT PANEL ── */
+.left{
+  padding:64px 56px;
+  border-right:1px solid var(--border);
+  display:flex;flex-direction:column;
+  justify-content:space-between;
+  background:var(--night);
+}
+.left-top{}
+.phase-label{
+  font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--gold);margin-bottom:12px;
+  display:flex;align-items:center;gap:8px;
+}
+.phase-label::before{content:'';width:14px;height:1px;background:var(--gold)}
+.left-title{
+  font-family:var(--serif);
+  font-size:clamp(32px,3.5vw,48px);
+  font-weight:300;font-style:italic;
+  color:var(--text);line-height:1.2;letter-spacing:-.5px;
+  margin-bottom:12px;
+}
+.left-sub{font-size:15px;color:var(--text2);line-height:1.75;max-width:400px;margin-bottom:40px}
+
+/* progress phases */
+.phases{display:flex;flex-direction:column;gap:0}
+.ph-item{
+  display:flex;align-items:flex-start;gap:14px;
+  padding:18px 0;border-bottom:1px solid var(--border);
+  transition:opacity .3s;
+}
+.ph-item:last-child{border-bottom:none}
+.ph-item.done{opacity:.45}
+.ph-item.active{opacity:1}
+.ph-item.upcoming{opacity:.25}
+.ph-node{
+  width:24px;height:24px;border-radius:50%;
+  border:1.5px solid var(--border2);
+  display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;margin-top:1px;
+  transition:all .3s;
+}
+.ph-item.done .ph-node{background:var(--navy3);border-color:var(--gold)}
+.ph-item.active .ph-node{background:var(--gold);border-color:var(--gold)}
+.ph-node svg{width:10px;height:10px;stroke:var(--night);fill:none;stroke-width:2.5}
+.ph-node-num{font-size:10px;font-weight:700;color:var(--text3)}
+.ph-item.active .ph-node-num{color:var(--night)}
+.ph-content{}
+.ph-name{font-size:14px;font-weight:600;color:var(--text);margin-bottom:2px}
+.ph-desc{font-size:12px;color:var(--text3);line-height:1.5}
+.ph-item.active .ph-name{color:var(--gold)}
+
+.left-footer{
+  font-size:12px;color:var(--text3);line-height:1.6;
+  border-top:1px solid var(--border);padding-top:24px;margin-top:24px;
+}
+
+/* ── RIGHT PANEL ── */
+.right{
+  background:var(--navy);
+  display:flex;flex-direction:column;
+  padding:0;overflow:hidden;
+}
+.form-area{
+  flex:1;padding:40px 36px;
+  overflow-y:auto;
+  display:flex;flex-direction:column;
+}
+.form-header{margin-bottom:32px}
+.step-counter{
+  font-size:11px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;
+  color:var(--text3);margin-bottom:8px;
+}
+.step-q{
+  font-size:20px;font-weight:700;color:var(--text);
+  letter-spacing:-.3px;line-height:1.3;margin-bottom:6px;
+}
+.step-hint{font-size:13px;color:var(--text2);line-height:1.6}
+
+/* option buttons */
+.opts{display:flex;flex-direction:column;gap:8px;margin-bottom:24px}
+.opts.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.opt{
+  display:flex;align-items:center;gap:12px;
+  padding:14px 16px;
+  border:1px solid var(--border2);border-radius:12px;
+  background:rgba(255,255,255,.03);
+  cursor:none;transition:all .15s;
+  position:relative;
+}
+.opt:hover{border-color:rgba(232,184,75,.35);background:rgba(232,184,75,.04)}
+.opt.selected{border-color:var(--gold);background:var(--gold-dim)}
+.opt-radio{
+  width:18px;height:18px;border-radius:50%;
+  border:1.5px solid var(--border2);flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  transition:all .15s;
+}
+.opt.selected .opt-radio{border-color:var(--gold);background:var(--gold)}
+.opt-radio-dot{width:6px;height:6px;border-radius:50%;background:var(--night);opacity:0;transition:opacity .15s}
+.opt.selected .opt-radio-dot{opacity:1}
+.opt-label{font-size:14px;font-weight:500;color:var(--text);flex:1}
+.opt-sub{font-size:12px;color:var(--text3);margin-top:1px}
+.opt.selected .opt-label{color:var(--gold)}
+.opt.selected .opt-sub{color:rgba(232,184,75,.6)}
+.opt-icon{font-size:16px;flex-shrink:0}
+
+/* text input */
+.input-group{margin-bottom:20px}
+.input-label{font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--text3);margin-bottom:8px}
+.inp{
+  width:100%;background:rgba(255,255,255,.04);
+  border:1px solid var(--border2);border-radius:10px;
+  padding:12px 16px;font-size:14px;font-weight:400;
+  color:var(--text);font-family:var(--sans);outline:none;
+  transition:border-color .15s;
+}
+.inp:focus{border-color:rgba(232,184,75,.5)}
+.inp::placeholder{color:var(--text3)}
+
+/* multi select */
+.multi-opts{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:24px}
+.mopt{
+  padding:11px 14px;border:1px solid var(--border2);border-radius:10px;
+  background:rgba(255,255,255,.03);cursor:none;
+  font-size:13px;font-weight:500;color:var(--text2);
+  transition:all .15s;display:flex;align-items:center;gap:8px;
+}
+.mopt:hover{border-color:rgba(232,184,75,.3);color:var(--text)}
+.mopt.selected{border-color:var(--gold);background:var(--gold-dim);color:var(--gold)}
+.mopt-check{
+  width:16px;height:16px;border-radius:4px;
+  border:1.5px solid var(--border2);flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  transition:all .15s;
+}
+.mopt.selected .mopt-check{background:var(--gold);border-color:var(--gold)}
+.mopt-check svg{width:9px;height:9px;stroke:var(--night);fill:none;stroke-width:2.5;opacity:0;transition:opacity .15s}
+.mopt.selected .mopt-check svg{opacity:1}
+
+/* slider */
+.slider-wrap{margin-bottom:24px}
+.slider-labels{display:flex;justify-content:space-between;margin-bottom:10px}
+.slider-label{font-size:12px;color:var(--text3)}
+input[type=range]{
+  width:100%;height:4px;
+  -webkit-appearance:none;appearance:none;
+  background:var(--border2);border-radius:2px;outline:none;cursor:none;
+}
+input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;
+  width:20px;height:20px;border-radius:50%;
+  background:var(--gold);border:3px solid var(--navy);
+  box-shadow:0 0 0 2px rgba(232,184,75,.3);
+  cursor:none;
+}
+.slider-val{
+  text-align:center;margin-top:10px;
+  font-size:22px;font-weight:700;color:var(--gold);letter-spacing:-.5px;
+}
+.slider-val-sub{font-size:12px;color:var(--text3);margin-top:2px;text-align:center}
+
+/* insight bar */
+.insight{
+  padding:12px 16px;border-left:2px solid var(--gold);
+  background:rgba(232,184,75,.04);border-radius:0 10px 10px 0;
+  margin-bottom:20px;font-size:13px;color:var(--text2);line-height:1.6;
+  display:none;
+}
+.insight.show{display:block}
+.insight strong{color:var(--gold);font-weight:600}
+
+/* bottom bar — back + dots only */
+.form-footer{
+  padding:16px 36px;border-top:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+  background:var(--navy);
+}
+.btn-back{
+  font-size:13px;font-weight:500;color:var(--text3);
+  background:none;border:none;cursor:none;
+  padding:6px 0;transition:color .15s;display:flex;align-items:center;gap:6px;
+}
+.btn-back:hover{color:var(--text2)}
+.btn-back svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.progress-dots{display:flex;gap:5px;align-items:center}
+.pdot{width:6px;height:6px;border-radius:50%;background:var(--border2);transition:all .3s}
+.pdot.done-dot{background:rgba(232,184,75,.45)}
+.pdot.active-dot{width:18px;border-radius:3px;background:var(--gold)}
+
+/* inline continue button inside each step */
+.btn-next{
+  display:block;width:100%;margin-top:24px;
+  font-size:15px;font-weight:700;
+  background:var(--gold);color:var(--night);
+  border:none;padding:14px;border-radius:11px;cursor:none;
+  transition:opacity .15s,transform .1s;
+  box-shadow:0 2px 20px rgba(232,184,75,.2);
+  text-align:center;
+}
+.btn-next:hover{opacity:.9;transform:translateY(-1px)}
+.btn-next:active{transform:scale(.98)}
+.btn-next:disabled{opacity:.28;transform:none;pointer-events:none}
+
+/* ── SIGN IN MODAL ── */
+.modal-overlay{
+  position:fixed;inset:0;background:rgba(8,13,26,.85);
+  backdrop-filter:blur(8px);z-index:500;
+  display:none;align-items:center;justify-content:center;
+}
+.modal-overlay.open{display:flex}
+.modal{
+  background:var(--navy2);border:1px solid var(--border2);
+  border-radius:20px;padding:40px 36px;width:100%;max-width:400px;
+  position:relative;
+  box-shadow:0 24px 64px rgba(0,0,0,.6);
+  animation:modalIn .25s cubic-bezier(.16,1,.3,1);
+}
+@keyframes modalIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+.modal-close{
+  position:absolute;top:16px;right:16px;
+  width:28px;height:28px;border-radius:8px;
+  background:rgba(255,255,255,.06);border:none;cursor:none;
+  display:flex;align-items:center;justify-content:center;color:var(--text3);
+  font-size:16px;transition:background .15s,color .15s;
+}
+.modal-close:hover{background:rgba(255,255,255,.1);color:var(--text)}
+.modal-logo{display:flex;align-items:center;gap:8px;margin-bottom:24px}
+.modal-mark{width:28px;height:28px;border-radius:8px;background:var(--gold);display:flex;align-items:center;justify-content:center}
+.modal-mark svg{width:13px;height:13px;stroke:var(--night);fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
+.modal-brand{font-size:15px;font-weight:700;color:var(--text)}
+.modal-title{font-size:22px;font-weight:700;color:var(--text);margin-bottom:6px;letter-spacing:-.3px}
+.modal-sub{font-size:13px;color:var(--text2);margin-bottom:28px;line-height:1.6}
+.modal-field{margin-bottom:14px}
+.modal-label{font-size:11px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--text3);margin-bottom:7px}
+.modal-inp{
+  width:100%;background:rgba(255,255,255,.05);
+  border:1px solid var(--border2);border-radius:10px;
+  padding:12px 14px;font-size:14px;color:var(--text);
+  font-family:var(--sans);outline:none;transition:border-color .15s;
+}
+.modal-inp:focus{border-color:rgba(232,184,75,.5)}
+.modal-inp::placeholder{color:var(--text3)}
+.btn-modal-submit{
+  width:100%;margin-top:20px;
+  font-size:14px;font-weight:700;
+  background:var(--gold);color:var(--night);
+  border:none;padding:13px;border-radius:10px;cursor:none;
+  transition:opacity .15s;
+  box-shadow:0 2px 16px rgba(232,184,75,.25);
+}
+.btn-modal-submit:hover{opacity:.9}
+.modal-divider{
+  display:flex;align-items:center;gap:12px;margin:20px 0;
+}
+.modal-divider-line{flex:1;height:1px;background:var(--border)}
+.modal-divider-text{font-size:12px;color:var(--text3)}
+.modal-footer-text{font-size:12px;color:var(--text3);text-align:center;line-height:1.6}
+.modal-footer-text a{color:var(--gold);text-decoration:none}
+.modal-footer-text a:hover{text-decoration:underline}
+
+/* ── SUMMARY SCREEN ── */
+.summary{display:none;flex-direction:column;gap:0;flex:1;padding:40px 36px}
+.summary.show{display:flex}
+.sum-header{margin-bottom:28px}
+.sum-badge{
+  display:inline-flex;align-items:center;gap:7px;
+  background:rgba(62,207,142,.1);border:1px solid rgba(62,207,142,.25);
+  color:var(--green);font-size:11px;font-weight:700;
+  padding:5px 12px;border-radius:20px;margin-bottom:14px;letter-spacing:.04em;
+}
+.sum-title{font-size:22px;font-weight:700;color:var(--text);margin-bottom:4px;letter-spacing:-.3px}
+.sum-sub{font-size:13px;color:var(--text2)}
+.sum-type{
+  padding:18px 20px;
+  background:rgba(232,184,75,.07);border:1px solid var(--gold-border);
+  border-radius:14px;margin-bottom:20px;
+  display:flex;align-items:center;gap:14px;
+}
+.sum-type-icon{
+  width:44px;height:44px;border-radius:12px;
+  background:var(--gold);display:flex;align-items:center;justify-content:center;
+  font-size:20px;flex-shrink:0;
+}
+.sum-type-name{font-size:17px;font-weight:700;color:var(--gold);margin-bottom:2px}
+.sum-type-desc{font-size:12px;color:rgba(232,184,75,.6);line-height:1.5}
+.sum-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:20px}
+.sum-item{
+  background:rgba(255,255,255,.03);border:1px solid var(--border);
+  border-radius:10px;padding:12px 14px;
+}
+.sum-key{font-size:10px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--text3);margin-bottom:4px}
+.sum-val{font-size:13px;font-weight:600;color:var(--text)}
+.sum-alloc{margin-bottom:20px}
+.sum-alloc-title{font-size:12px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--text3);margin-bottom:12px}
+.alloc-bars{display:flex;flex-direction:column;gap:8px}
+.abar{display:flex;align-items:center;gap:10px}
+.abar-name{font-size:12px;color:var(--text2);width:52px;flex-shrink:0}
+.abar-track{flex:1;height:6px;background:rgba(255,255,255,.07);border-radius:3px;overflow:hidden}
+.abar-fill{height:100%;border-radius:3px}
+.af-g{background:var(--gold)}.af-b{background:var(--accent)}.af-gr{background:var(--green)}
+.abar-pct{font-size:12px;font-weight:700;color:var(--text);width:32px;text-align:right;flex-shrink:0}
+.sum-note{
+  padding:14px 16px;border-left:2px solid var(--gold);
+  background:rgba(232,184,75,.04);border-radius:0 10px 10px 0;
+  font-size:13px;color:var(--text2);line-height:1.65;
+  margin-bottom:20px;
+}
+.sum-note strong{color:var(--gold);font-weight:600}
+.btn-full{
+  width:100%;font-size:15px;font-weight:700;
+  background:var(--gold);color:var(--night);
+  border:none;padding:15px;border-radius:11px;cursor:none;
+  transition:opacity .15s;box-shadow:0 4px 24px rgba(232,184,75,.25);
+}
+.btn-full:hover{opacity:.9}
+
+/* ── ANIM ── */
+.step-panel{display:none;flex-direction:column;flex:1}
+.step-panel.active{display:flex;animation:fadeIn .3s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+</style>
+</head>
+<body>
+
+<div id="cur"></div>
+<div id="cur-ring"></div>
+
+<nav>
+  <a href="verso_v5-2.html" class="logo">
+    <div class="logo-mark"><svg viewBox="0 0 16 16"><polyline points="2,12 6,6 10,9 14,3"/></svg></div>
+    <span class="logo-name">Verso</span>
+  </a>
+  <div class="nav-right">Already have an account? <a href="#" onclick="openModal();return false;">Sign in</a></div>
+</nav>
+
+<div class="page">
+
+  <!-- LEFT -->
+  <div class="left">
+    <div class="left-top">
+      <div class="phase-label">Building your profile</div>
+      <div class="left-title">Five minutes to a portfolio that fits your life.</div>
+      <p class="left-sub">We ask about your real financial picture — not just a risk number. The more we know, the better we can explain every decision.</p>
+
+      <div class="phases" id="phaseList">
+        <div class="ph-item active" data-phase="0">
+          <div class="ph-node"><span class="ph-node-num">1</span></div>
+          <div class="ph-content">
+            <div class="ph-name">Life stage</div>
+            <div class="ph-desc">Age, household, dependents</div>
+          </div>
+        </div>
+        <div class="ph-item upcoming" data-phase="1">
+          <div class="ph-node"><span class="ph-node-num">2</span></div>
+          <div class="ph-content">
+            <div class="ph-name">Income & stability</div>
+            <div class="ph-desc">Employment, cash flow, savings rate</div>
+          </div>
+        </div>
+        <div class="ph-item upcoming" data-phase="2">
+          <div class="ph-node"><span class="ph-node-num">3</span></div>
+          <div class="ph-content">
+            <div class="ph-name">Goals & timeline</div>
+            <div class="ph-desc">What you're investing for and when</div>
+          </div>
+        </div>
+        <div class="ph-item upcoming" data-phase="3">
+          <div class="ph-node"><span class="ph-node-num">4</span></div>
+          <div class="ph-content">
+            <div class="ph-name">Risk & experience</div>
+            <div class="ph-desc">How you feel about market swings</div>
+          </div>
+        </div>
+        <div class="ph-item upcoming" data-phase="4">
+          <div class="ph-node"><span class="ph-node-num">5</span></div>
+          <div class="ph-content">
+            <div class="ph-name">Your profile</div>
+            <div class="ph-desc">Investor type and allocation</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="left-footer">
+      Educational guidance only · Not financial advice · FINRA suitability informed
+    </div>
+  </div>
+
+  <!-- RIGHT -->
+  <div class="right">
+    <div class="form-area" id="formArea">
+
+      <!-- STEP 1 -->
+      <div class="step-panel active" id="step-0">
+        <div class="form-header">
+          <div class="step-counter">Step 1 of 10 · Life stage</div>
+          <div class="step-q">How old are you?</div>
+          <div class="step-hint">This shapes how much time your portfolio has to grow — and recover from dips.</div>
+        </div>
+        <div class="opts" id="opts-0">
+          <div class="opt" data-val="Under 25" onclick="selectOpt(0,this)"><div class="opt-radio"><div class="opt-radio-dot"></div></div><div><div class="opt-label">Under 25</div><div class="opt-sub">Just getting started</div></div></div>
+          <div class="opt" data-val="25–34" onclick="selectOpt(0,this)"><div class="opt-radio"><div class="opt-radio-dot"></div></div><div><div class="opt-label">25–34</div><div class="opt-sub">Building momentum</div></div></div>
+          <div class="opt" data-val="35–44" onclick="selectOpt(0,this)"><div class="opt-radio"><div class="opt-radio-dot"></div></div><div><div class="opt-label">35–44</div><div class="opt-sub">Growing wealth</div></div></div>
+          <div class="opt" data-val="45–54" onclick="selectOpt(0,this)"><div class="opt-radio"><div class="opt-radio-dot"></div></div><div><div class="opt-label">45–54</div><div class="opt-sub">Consolidating gains</div></div></div>
+          <div class="opt" data-val="55+" onclick="selectOpt(0,this)"><div class="opt-radio"><div class="opt-radio-dot"></div></div><div><div class="opt-label">55 or older</div><div class="opt-sub">Approaching or in retirement</div></div></div>
+        </div>
+        <div class="insight" id="insight-0"></div>
+      </div>
+
+      <!-- STEP 2 -->
+      <div class="step-panel" id="step-1">
+        <div class="form-header">
+          <div class="step-counter">Step 2 of 10 · Life stage</div>
+          <div class="step-q">What does your household look like?</div>
+          <div class="step-hint">Financial responsibilities shape how much risk actually makes sense for you.</div>
+        </div>
+        <div class="opts grid-2" id="opts-1">
+          <div class="opt" data-val="Just me" onclick="selectOpt(1,this)"><div class="opt-radio"><div class="opt-radio-dot"></div></div><div><div class="opt-label">Just me</div><div class="opt-sub">No dependents</div></div></div>
+          <div class="opt" data-val="Partner" onclick="selectOpt(1,this)"><div class="opt-radio"><div class="opt-radio-dot"></div></div><div><div class="opt-label">Partner</div><div class="opt-sub">Dual income or shared</div></div></div>
+          <div class="opt" data-val="Family with kids" onclick="selectOpt(1,this)"><div class="opt-radio"><div class="opt-radio-dot"></div></div><div><div class="opt-label">Family with kids</div><div class="opt-sub">Dependents at home</div></div></div>
+          <div class="opt" data-val="Supporting parents" onclick="selectOpt(1,this)"><div class="opt-radio"><div class="opt-radio-dot"></div></div><div><div class="opt-label">Supporting parents</div><div class="opt-sub">Extended family costs</div></div></div>
+        </div>
+        <div class="insight" id="insight-1"></div>
+      </div>
+
+      <!-- STEP 3 -->
+      <div class="step-panel" id="step-2">
+        <div class="form-header">
+          <div class="step-counter">Step 3 of 10 · Income</div>
+          <div class="step-q">How stable is your income?</div>
+          <div class="step-hint">Stability affects how much market volatility you can absorb without stress.</div>
+        </div>
+        <div class="opts" id="opts-2">
+          <div class="opt" data-val="Very stable" onclick="selectOpt(2,this)"><div class="opt-radio"><div class="opt-radio-dot"></div></div><div><div class="opt-label">Very stable</div><div class="opt-sub">Salaried job, predictable paycheck</div></div></div>
+          <div class="opt" data-val="Mostly stable" onclick="selectOpt(2,this)"><div class="opt-radio"><div class="opt-radio-dot"></div></div><div><div class="opt-label">Mostly stable</div><div class="opt-sub">Occasional variation</div></div></div>
+          <div class="opt" data-val="Variable" onclick="selectOpt(2,this)"><div class="opt-radio"><div class="opt-radio-dot"></div></div><div><div class="opt-label">Variable</div><div class="opt-sub">Freelance, commission, or seasonal</div></div></div>
+          <div class="opt" data-val="In transition" onclick="selectOpt(2,this)"><div class="opt-radio"><div class="opt-radio-dot"></div></div><div><div class="opt-label">In transition</div><div class="opt-sub">Between jobs or changing careers</div></div></div>
+        </div>
+        <div class="insight" id="insight-2"></div>
+      </div>
+
+      <!-- STEP 4 -->
+      <div class="step-panel" id="step-3">
+        <div class="form-header">
+          <div class="step-counter">Step 4 of 10 · Income</div>
+          <div class="step-q">After bills, how much can you invest monthly?</div>
+          <div class="step-hint">No need for exact numbers — a rough range is perfect.</div>
+        </div>
+        <div class="opts grid-2" id="opts-3">
+          <div class="opt" data-val="Under $200" onclick="selectOpt(3,this)"><div class="opt-radio"><div class="opt-radio-dot"></div></div><div><div class="opt-label">Under $200</div><div class="opt-sub">Starting small</div></div></div>
+          <div class="opt" data-val="$200–$500" onclick="selectOpt(3,this)"><div class="opt-radio"><div class="opt-radio-dot"></div></div><div><div class="opt-label">$200–$500</div></div></div>
+          <div class="opt" data-val="$500–$1,000" onclick="selectOpt(3,this)"><div class="opt-radio"><div class="opt-radio-dot"></div></div><div><div class="opt-label">$500–$1,000</div></div></div>
+          <div class="opt" data-val="$1,000–$2,500" onclick="selectOpt(3,this)"><div class="opt-radio"><div class="opt-radio-dot"></div></div><div><div class="opt-label">$1,000–$2,500</div></div></div>
+          <div class="opt" data-val="$2,500+" onclick="selectOpt(3,this)"><div class="opt-radio"><div class="opt-radio-dot"></div></div><div><div class="opt-label">$2,500+</div><div class="opt-sub">High contributor</div></div></div>
+        </div>
+        <div class="insight" id="insight-3">
+          <span id="insight-3-text"></span>
+        </div>
+      </div>
+
+      <!-- STEP 5 -->
+      <div class="step-panel" id="step-4">
+        <div class="form-header">
+          <div class="step-counter">Step 5 of 10 · Income</div>
+          <div class="step-q">Do you have an emergency fund?</div>
+          <div class="step-hint">Cash savings separate from investments. This is one of the most important factors in how we structure your portfolio.</div>
+        </div>
+        <div class="opts grid-2" id="opts-4">
+          <div class="opt" data-val="Not yet" onclick="selectOpt(4,this)"><div class="opt-radio"><div class="opt-radio-dot"></div></div><div><div class="opt-label">Not yet</div><div class="opt-sub">Under 1 month</div></div></div>
+          <div class="opt" data-val="Partial" onclick="selectOpt(4,this)"><div class="opt-radio"><div class="opt-radio-dot"></div></div><div><div class="opt-label">Partial</div><div class="opt-sub">1–3 months of expenses</div></div></div>
+          <div class="opt" data-val="Good" onclick="selectOpt(4,this)"><div class="opt-radio"><div class="opt-radio-dot"></div></div><div><div class="opt-label">Good shape</div><div class="opt-sub">3–6 months</div></div></div>
+          <div class="opt" data-val="Strong" onclick="selectOpt(4,this)"><div class="opt-radio"><div class="opt-radio-dot"></div></div><div><div class="opt-label">Strong</div><div class="opt-sub">6+ months</div></div></div>
+        </div>
+        <div class="insight" id="insight-4"></div>
+      </div>
+
+      <!-- STEP 6 -->
+      <div class="step-panel" id="step-5">
+        <div class="form-header">
+          <div class="step-counter">Step 6 of 10 · Goals</div>
+          <div class="step-q">What's your main reason for investing?</div>
+          <div class="step-hint">Pick the goal that matters most right now. You can always add more later.</div>
+        </div>
+        <div class="multi-opts" id="opts-5">
+          <div class="mopt" data-val="Retirement" onclick="toggleMulti(5,this)"><div class="mopt-check"><svg viewBox="0 0 9 9"><polyline points="1.5,4.5 3.5,6.5 7.5,2.5"/></svg></div>Retirement</div>
+          <div class="mopt" data-val="Buying a home" onclick="toggleMulti(5,this)"><div class="mopt-check"><svg viewBox="0 0 9 9"><polyline points="1.5,4.5 3.5,6.5 7.5,2.5"/></svg></div>Buying a home</div>
+          <div class="mopt" data-val="Education" onclick="toggleMulti(5,this)"><div class="mopt-check"><svg viewBox="0 0 9 9"><polyline points="1.5,4.5 3.5,6.5 7.5,2.5"/></svg></div>Education</div>
+          <div class="mopt" data-val="Wealth building" onclick="toggleMulti(5,this)"><div class="mopt-check"><svg viewBox="0 0 9 9"><polyline points="1.5,4.5 3.5,6.5 7.5,2.5"/></svg></div>Wealth building</div>
+          <div class="mopt" data-val="Emergency buffer" onclick="toggleMulti(5,this)"><div class="mopt-check"><svg viewBox="0 0 9 9"><polyline points="1.5,4.5 3.5,6.5 7.5,2.5"/></svg></div>Emergency buffer</div>
+          <div class="mopt" data-val="Big purchase" onclick="toggleMulti(5,this)"><div class="mopt-check"><svg viewBox="0 0 9 9"><polyline points="1.5,4.5 3.5,6.5 7.5,2.5"/></svg></div>Big purchase</div>
+        </div>
+        <div class="insight show" id="insight-5"><strong>Select all that apply.</strong> We'll weight your strategy toward the most time-sensitive goal.</div>
+      </div>
+
+      <!-- STEP 7 -->
+      <div class="step-panel" id="step-6">
+        <div class="form-header">
+          <div class="step-counter">Step 7 of 10 · Goals</div>
+          <div class="step-q">When do you expect to need this money?</div>
+          <div class="step-hint">Your time horizon is the single biggest driver of how aggressive or conservative your portfolio should be.</div>
+        </div>
+        <div class="opts" id="opts-6">
+          <div class="opt" data-val="Within 1 year" onclick="selectOpt(6,this)"><div class="opt-radio"><div class="opt-radio-dot"></div></div><div><div class="opt-label">Within 1 year</div><div class="opt-sub">Short-term need</div></div></div>
+          <div class="opt" data-val="1–3 years" onclick="selectOpt(6,this)"><div class="opt-radio"><div class="opt-radio-dot"></div></div><div><div class="opt-label">1–3 years</div></div></div>
+          <div class="opt" data-val="3–5 years" onclick="selectOpt(6,this)"><div class="opt-radio"><div class="opt-radio-dot"></div></div><div><div class="opt-label">3–5 years</div></div></div>
+          <div class="opt" data-val="5–10 years" onclick="selectOpt(6,this)"><div class="opt-radio"><div class="opt-radio-dot"></div></div><div><div class="opt-label">5–10 years</div></div></div>
+          <div class="opt" data-val="10+ years" onclick="selectOpt(6,this)"><div class="opt-radio"><div class="opt-radio-dot"></div></div><div><div class="opt-label">More than 10 years</div><div class="opt-sub">Long-term horizon</div></div></div>
+        </div>
+        <div class="insight" id="insight-6"></div>
+      </div>
+
+      <!-- STEP 8 -->
+      <div class="step-panel" id="step-7">
+        <div class="form-header">
+          <div class="step-counter">Step 8 of 10 · Risk</div>
+          <div class="step-q">If your portfolio dropped 20%, what would you do?</div>
+          <div class="step-hint">Be honest — there's no wrong answer. This tells us how you'll actually feel, not how you think you should feel.</div>
+        </div>
+        <div class="opts" id="opts-7">
+          <div class="opt" data-val="Sell everything" onclick="selectOpt(7,this)"><div class="opt-radio"><div class="opt-radio-dot"></div></div><div><div class="opt-label">Sell everything immediately</div><div class="opt-sub">Safety is my top priority</div></div></div>
+          <div class="opt" data-val="Sell some" onclick="selectOpt(7,this)"><div class="opt-radio"><div class="opt-radio-dot"></div></div><div><div class="opt-label">Sell some to cut losses</div><div class="opt-sub">Reduce exposure where possible</div></div></div>
+          <div class="opt" data-val="Hold" onclick="selectOpt(7,this)"><div class="opt-radio"><div class="opt-radio-dot"></div></div><div><div class="opt-label">Do nothing and wait</div><div class="opt-sub">I trust the long-term</div></div></div>
+          <div class="opt" data-val="Buy more" onclick="selectOpt(7,this)"><div class="opt-radio"><div class="opt-radio-dot"></div></div><div><div class="opt-label">Invest more while prices are low</div><div class="opt-sub">I see it as an opportunity</div></div></div>
+        </div>
+        <div class="insight" id="insight-7"></div>
+      </div>
+
+      <!-- STEP 9 -->
+      <div class="step-panel" id="step-8">
+        <div class="form-header">
+          <div class="step-counter">Step 9 of 10 · Risk</div>
+          <div class="step-q">How familiar are you with investing?</div>
+          <div class="step-hint">This shapes how Verso explains things to you — not what you can invest in.</div>
+        </div>
+        <div class="opts" id="opts-8">
+          <div class="opt" data-val="Complete beginner" onclick="selectOpt(8,this)"><div class="opt-radio"><div class="opt-radio-dot"></div></div><div><div class="opt-label">Complete beginner</div><div class="opt-sub">I'm learning as I go</div></div></div>
+          <div class="opt" data-val="Some basics" onclick="selectOpt(8,this)"><div class="opt-radio"><div class="opt-radio-dot"></div></div><div><div class="opt-label">Some basics</div><div class="opt-sub">I've read about it but haven't invested much</div></div></div>
+          <div class="opt" data-val="Some experience" onclick="selectOpt(8,this)"><div class="opt-radio"><div class="opt-radio-dot"></div></div><div><div class="opt-label">Some experience</div><div class="opt-sub">I've bought stocks or funds before</div></div></div>
+          <div class="opt" data-val="Comfortable" onclick="selectOpt(8,this)"><div class="opt-radio"><div class="opt-radio-dot"></div></div><div><div class="opt-label">Comfortable</div><div class="opt-sub">I manage my own portfolio</div></div></div>
+        </div>
+        <div class="insight" id="insight-8"></div>
+      </div>
+
+      <!-- STEP 10 -->
+      <div class="step-panel" id="step-9">
+        <div class="form-header">
+          <div class="step-counter">Step 10 of 10 · Almost done</div>
+          <div class="step-q">Any investments we should know about?</div>
+          <div class="step-hint">If you already hold assets elsewhere, we'll factor them into your recommended allocation.</div>
+        </div>
+        <div class="multi-opts" id="opts-9">
+          <div class="mopt" data-val="401k/IRA" onclick="toggleMulti(9,this)"><div class="mopt-check"><svg viewBox="0 0 9 9"><polyline points="1.5,4.5 3.5,6.5 7.5,2.5"/></svg></div>401k / IRA</div>
+          <div class="mopt" data-val="Stocks/ETFs" onclick="toggleMulti(9,this)"><div class="mopt-check"><svg viewBox="0 0 9 9"><polyline points="1.5,4.5 3.5,6.5 7.5,2.5"/></svg></div>Stocks / ETFs</div>
+          <div class="mopt" data-val="Real estate" onclick="toggleMulti(9,this)"><div class="mopt-check"><svg viewBox="0 0 9 9"><polyline points="1.5,4.5 3.5,6.5 7.5,2.5"/></svg></div>Real estate</div>
+          <div class="mopt" data-val="Crypto" onclick="toggleMulti(9,this)"><div class="mopt-check"><svg viewBox="0 0 9 9"><polyline points="1.5,4.5 3.5,6.5 7.5,2.5"/></svg></div>Crypto</div>
+          <div class="mopt" data-val="Gold/commodities" onclick="toggleMulti(9,this)"><div class="mopt-check"><svg viewBox="0 0 9 9"><polyline points="1.5,4.5 3.5,6.5 7.5,2.5"/></svg></div>Gold / commodities</div>
+          <div class="mopt" data-val="None" onclick="toggleMulti(9,this)"><div class="mopt-check"><svg viewBox="0 0 9 9"><polyline points="1.5,4.5 3.5,6.5 7.5,2.5"/></svg></div>None</div>
+        </div>
+        <div class="insight show" id="insight-9"><strong>Select all that apply.</strong> If you have none, just pick "None" and we'll start fresh.</div>
+      </div>
+
+      <!-- SUMMARY -->
+      <div class="summary" id="summaryPanel">
+        <div class="sum-header">
+          <div class="sum-badge">✓ Profile complete</div>
+          <div class="sum-title">Your investor profile</div>
+          <div class="sum-sub">Based on your answers, here's how Verso sees you.</div>
+        </div>
+        <div class="sum-type" id="sumType">
+          <div class="sum-type-icon" id="sumTypeIcon">⚖️</div>
+          <div>
+            <div class="sum-type-name" id="sumTypeName">Balanced Growth</div>
+            <div class="sum-type-desc" id="sumTypeDesc">Growth-oriented with a moderate safety cushion</div>
+          </div>
+        </div>
+        <div class="sum-grid" id="sumGrid"></div>
+        <div class="sum-alloc">
+          <div class="sum-alloc-title">Suggested starting allocation</div>
+          <div class="alloc-bars" id="sumAlloc"></div>
+        </div>
+        <div class="sum-note" id="sumNote"></div>
+        <button class="btn-full" onclick="window.location.href='verso_app.html'">Build my portfolio →</button>
+      </div>
+
+    </div><!-- /form-area -->
+
+    <div class="form-footer">
+      <button class="btn-back" id="btnBack" onclick="goBack()">
+        <svg viewBox="0 0 14 14"><polyline points="9,2 4,7 9,12"/></svg>
+        Back
+      </button>
+      <div class="progress-dots" id="progressDots"></div>
+      <span style="font-size:12px;color:var(--text3)" id="stepLabel">Step 1 of 10</span>
+    </div>
+  </div><!-- /right -->
+
+</div><!-- /page -->
+
+<!-- SIGN IN MODAL -->
+<div class="modal-overlay" id="signinModal" onclick="closeModalOutside(event)">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <div class="modal-logo">
+      <div class="modal-mark"><svg viewBox="0 0 16 16"><polyline points="2,12 6,6 10,9 14,3"/></svg></div>
+      <span class="modal-brand">Verso</span>
+    </div>
+    <div class="modal-title">Welcome back</div>
+    <div class="modal-sub">Sign in to pick up where you left off — your profile and portfolio are waiting.</div>
+    <div class="modal-field">
+      <div class="modal-label">Email</div>
+      <input class="modal-inp" type="email" placeholder="you@example.com"/>
+    </div>
+    <div class="modal-field">
+      <div class="modal-label">Password</div>
+      <input class="modal-inp" type="password" placeholder="••••••••"/>
+    </div>
+    <button class="btn-modal-submit" onclick="handleSignIn()">Sign in</button>
+    <div class="modal-divider">
+      <div class="modal-divider-line"></div>
+      <span class="modal-divider-text">or</span>
+      <div class="modal-divider-line"></div>
+    </div>
+    <div class="modal-footer-text">
+      Don't have an account? <a href="#" onclick="closeModal()">Build your profile →</a><br/>
+      <span style="margin-top:6px;display:block">Forgot your password? <a href="#">Reset it</a></span>
+    </div>
+  </div>
+</div>
+
+<script>
+const TOTAL = 10;
+let current = 0;
+const answers = {};
+
+// insights
+const insights = {
+  0: v => v === 'Under 25' ? 'With time on your side, your portfolio can take more short-term risk for higher long-term growth.'
+    : v === '55+' ? 'Closer to retirement means we\'ll lean toward capital preservation — protecting what you\'ve built.' : null,
+  1: v => (v === 'Family with kids' || v === 'Supporting parents') ? 'With dependents, we\'ll make sure your strategy includes a solid safety cushion before investing aggressively.' : null,
+  2: v => v === 'Variable' ? 'Variable income means we\'ll recommend a larger emergency fund before pushing too hard on equity risk.'
+    : v === 'In transition' ? 'While in transition, we\'ll keep your allocation conservative until your income picture stabilizes.' : null,
+  3: () => 'Your monthly amount determines how quickly we can rebalance using new contributions — avoiding unnecessary sells.',
+  4: v => (v === 'Not yet' || v === 'Partial') ? 'We\'ll factor in building your emergency fund before increasing investment risk. Protecting your downside comes first.' : null,
+  6: v => (v === 'Within 1 year' || v === '1–3 years') ? 'Short timelines mean a more conservative mix — there\'s less time to recover from a market dip.' : null,
+  7: v => v === 'Buy more' ? 'Buying on dips is historically effective — we\'ll give you a portfolio that stays the course when things get bumpy.'
+    : v === 'Sell everything' ? 'Capital preservation matters most to you — we\'ll structure around stability, not growth speed.' : null,
+  8: v => v === 'Complete beginner' ? 'No problem at all. Verso will explain everything in plain English, step by step, no jargon ever.' : null,
+};
+
+// multi-answer steps
+const multiSteps = new Set([5, 9]);
+
+function selectOpt(step, el) {
+  document.querySelectorAll(`#opts-${step} .opt`).forEach(o => o.classList.remove('selected'));
+  el.classList.add('selected');
+  answers[step] = el.dataset.val;
+  showInsight(step, el.dataset.val);
+  refreshNextBtn();
+}
+
+function toggleMulti(step, el) {
+  if (el.dataset.val === 'None') {
+    document.querySelectorAll(`#opts-${step} .mopt`).forEach(o => o.classList.remove('selected'));
+    el.classList.add('selected');
+    answers[step] = ['None'];
+  } else {
+    document.querySelector(`#opts-${step} .mopt[data-val="None"]`)?.classList.remove('selected');
+    el.classList.toggle('selected');
+    const sel = [...document.querySelectorAll(`#opts-${step} .mopt.selected`)].map(o => o.dataset.val);
+    answers[step] = sel.length ? sel : null;
+  }
+  refreshNextBtn();
+}
+
+function showInsight(step, val) {
+  const bar = document.getElementById(`insight-${step}`);
+  if (!bar) return;
+  const fn = insights[step];
+  const msg = fn ? fn(val) : null;
+  if (msg) { bar.innerHTML = msg; bar.classList.add('show'); }
+  else if (!bar.classList.contains('show') || !bar.innerHTML.includes('Select')) { bar.classList.remove('show'); }
+}
+
+function buildDots() {
+  const el = document.getElementById('progressDots');
+  el.innerHTML = '';
+  for (let i = 0; i < TOTAL; i++) {
+    const d = document.createElement('div');
+    d.className = 'pdot' + (i < current ? ' done-dot' : i === current ? ' active-dot' : '');
+    el.appendChild(d);
+  }
+}
+
+function updatePhases() {
+  const phaseMap = [0,0,1,1,1,2,2,3,3,3];
+  const curPhase = phaseMap[Math.min(current, TOTAL-1)];
+  document.querySelectorAll('.ph-item').forEach((el, i) => {
+    el.classList.remove('active','done','upcoming');
+    if (i < curPhase) el.classList.add('done');
+    else if (i === curPhase) el.classList.add('active');
+    else el.classList.add('upcoming');
+    // update node for done
+    const node = el.querySelector('.ph-node');
+    const num = el.querySelector('.ph-node-num');
+    if (i < curPhase) {
+      node.innerHTML = '<svg viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="2,5 4.5,7.5 8.5,2.5"/></svg>';
+    } else {
+      node.innerHTML = `<span class="ph-node-num">${i+1}</span>`;
+    }
+  });
+}
+
+function updateStepLabel() {
+  const el = document.getElementById('stepLabel');
+  if (el) el.textContent = current < TOTAL ? `Step ${current + 1} of ${TOTAL}` : 'Profile complete';
+}
+
+function goNext() {
+  if (current < TOTAL) {
+    document.getElementById(`step-${current}`)?.classList.remove('active');
+    current++;
+    if (current === TOTAL) {
+      showSummary();
+    } else {
+      document.getElementById(`step-${current}`)?.classList.add('active');
+      refreshNextBtn();
+    }
+    buildDots();
+    updatePhases();
+    updateStepLabel();
+    document.getElementById('btnBack').style.visibility = 'visible';
+    document.getElementById('formArea').scrollTop = 0;
+  }
+}
+
+function goBack() {
+  if (current === TOTAL) {
+    document.getElementById('summaryPanel').classList.remove('show');
+    document.getElementById(`step-${TOTAL-1}`)?.classList.add('active');
+    current = TOTAL - 1;
+    refreshNextBtn();
+  } else if (current > 0) {
+    document.getElementById(`step-${current}`)?.classList.remove('active');
+    current--;
+    document.getElementById(`step-${current}`)?.classList.add('active');
+    refreshNextBtn();
+  }
+  if (current === 0) document.getElementById('btnBack').style.visibility = 'hidden';
+  buildDots();
+  updatePhases();
+  updateStepLabel();
+  document.getElementById('formArea').scrollTop = 0;
+}
+
+function deriveProfile() {
+  const emergency = answers[4];
+  const drop = answers[7];
+  const horizon = answers[6];
+  const income = answers[2];
+
+  if (emergency === 'Not yet' || income === 'In transition') return { name:'Safety-first', desc:'Build your financial foundation before adding investment risk', icon:'🛡️', eq:30, bond:50, cash:20 };
+  if (drop === 'Sell everything') return { name:'Conservative', desc:'Capital preservation is the priority — slow and steady', icon:'🏦', eq:30, bond:55, cash:15 };
+  if (drop === 'Buy more' && (horizon === '10+ years' || horizon === '5–10 years')) return { name:'Aggressive Growth', desc:'High equity tolerance with a long runway to recover', icon:'🚀', eq:85, bond:12, cash:3 };
+  if (horizon === '10+ years' || horizon === '5–10 years') return { name:'Balanced Growth', desc:'Growth-oriented with a moderate safety cushion', icon:'⚖️', eq:65, bond:28, cash:7 };
+  return { name:'Moderate', desc:'Balanced approach with an eye on nearer-term needs', icon:'📈', eq:50, bond:38, cash:12 };
+}
+
+function showSummary() {
+  const profile = deriveProfile();
+  document.getElementById('summaryPanel').classList.add('show');
+  document.getElementById('sumTypeName').textContent = profile.name + ' Investor';
+  document.getElementById('sumTypeDesc').textContent = profile.desc;
+  document.getElementById('sumTypeIcon').textContent = profile.icon;
+
+  const pairs = [
+    ['Age range', answers[0] || '—'],
+    ['Household', answers[1] || '—'],
+    ['Income stability', answers[2] || '—'],
+    ['Monthly investable', answers[3] || '—'],
+    ['Emergency fund', answers[4] || '—'],
+    ['Goals', Array.isArray(answers[5]) ? answers[5].join(', ') : '—'],
+    ['Time horizon', answers[6] || '—'],
+    ['Market drop', answers[7] || '—'],
+    ['Experience', answers[8] || '—'],
+    ['Other assets', Array.isArray(answers[9]) ? answers[9].join(', ') : '—'],
+  ];
+  document.getElementById('sumGrid').innerHTML = pairs.map(([k,v]) =>
+    `<div class="sum-item"><div class="sum-key">${k}</div><div class="sum-val">${v}</div></div>`
+  ).join('');
+
+  document.getElementById('sumAlloc').innerHTML = [
+    ['Equity', profile.eq, 'af-g'],
+    ['Bonds', profile.bond, 'af-b'],
+    ['Cash', profile.cash, 'af-gr'],
+  ].map(([n,p,c]) =>
+    `<div class="abar"><span class="abar-name">${n}</span><div class="abar-track"><div class="abar-fill ${c}" style="width:${p}%"></div></div><span class="abar-pct">${p}%</span></div>`
+  ).join('');
+
+  const noteMap = {
+    'Safety-first': 'We\'ll suggest building your emergency fund and stabilizing income before increasing equity risk. Protecting your downside comes first.',
+    'Conservative': 'Your priority is protecting what you have. We\'ll build around stability — bonds and cash-heavy — with modest equity for some growth.',
+    'Aggressive Growth': 'With your long horizon and strong risk appetite, you can weather volatility. We\'ll lean heavily into equities for maximum long-term return.',
+    'Balanced Growth': 'Your stable income and solid emergency fund mean you can take equity risk. The bond allocation cushions any near-term goals.',
+    'Moderate': 'With a medium horizon and moderate risk comfort, we\'ll balance growth and stability — ready to shift as your timeline evolves.',
+  };
+  document.getElementById('sumNote').innerHTML = `<strong>Verso says:</strong> ${noteMap[profile.name] || ''}`;
+}
+
+// init
+buildDots();
+updatePhases();
+document.getElementById('btnBack').style.visibility = 'hidden';
+
+// inject Continue button into every step panel
+document.querySelectorAll('.step-panel').forEach((panel, i) => {
+  const btn = document.createElement('button');
+  btn.className = 'btn-next';
+  btn.id = `btnNext-${i}`;
+  btn.disabled = true;
+  btn.textContent = i === TOTAL - 1 ? 'See my profile →' : 'Continue';
+  btn.onclick = goNext;
+  panel.appendChild(btn);
+});
+
+function refreshNextBtn() {
+  const btn = document.getElementById(`btnNext-${current}`);
+  if (!btn) return;
+  const isMulti = multiSteps.has(current);
+  btn.disabled = isMulti ? !answers[current]?.length : !answers[current];
+}
+
+// cursor
+const cur = document.getElementById('cur'), ring = document.getElementById('cur-ring');
+let mx=0,my=0,rx=0,ry=0;
+document.addEventListener('mousemove', e => { mx=e.clientX; my=e.clientY; cur.style.left=mx+'px'; cur.style.top=my+'px'; });
+(function loop(){ rx+=(mx-rx)*.1; ry+=(my-ry)*.1; ring.style.left=rx+'px'; ring.style.top=ry+'px'; requestAnimationFrame(loop); })();
+
+// modal
+function openModal(){ document.getElementById('signinModal').classList.add('open'); }
+function closeModal(){ document.getElementById('signinModal').classList.remove('open'); }
+function closeModalOutside(e){ if(e.target === document.getElementById('signinModal')) closeModal(); }
+
+// Smart sign-in: existing user → dashboard, new user → stay on onboarding
+const ACCOUNTS = {'priya@example.com':'password123','demo@verso.app':'demo1234','yashaswir3@gmail.com':'verso2025'};
+function handleSignIn(){
+  const email = (document.getElementById('modalEmail')?.value||'').trim().toLowerCase();
+  if(ACCOUNTS[email] !== undefined){
+    window.location.href = 'verso_app.html';
+  } else {
+    closeModal();
+  }
+}
+</script>
+</body>
+</html>

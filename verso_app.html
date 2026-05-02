@@ -1,0 +1,1038 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Verso — App</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300;1,9..144,400&display=swap" rel="stylesheet"/>
+<style>
+/* ── RESET & VARS ── */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --night:#080d1a;--navy:#0d1428;--navy2:#111c35;--navy3:#162040;
+  --surface:#1a2444;--gold:#e8b84b;--gold-dim:rgba(232,184,75,.1);
+  --gold-border:rgba(232,184,75,.22);--text:#eef1ff;
+  --text2:rgba(238,241,255,.55);--text3:rgba(238,241,255,.28);
+  --text4:rgba(238,241,255,.1);--border:rgba(255,255,255,.07);
+  --border2:rgba(255,255,255,.13);--green:#3ecf8e;
+  --green-dim:rgba(62,207,142,.1);--red:#f87171;--red-dim:rgba(248,113,113,.1);
+  --accent:#4f7fff;--accent-dim:rgba(79,127,255,.1);
+  --sans:'Geist',system-ui,sans-serif;--serif:'Fraunces',Georgia,serif;
+}
+html,body{height:100%;overflow:hidden}
+body{background:var(--night);color:var(--text);font-family:var(--sans);
+  font-weight:400;display:flex;flex-direction:column;
+  cursor:none;-webkit-font-smoothing:antialiased}
+
+/* ── CURSOR ── */
+#cur{position:fixed;width:9px;height:9px;background:var(--gold);border-radius:50%;
+  pointer-events:none;z-index:9999;transform:translate(-50%,-50%);
+  transition:width .15s,height .15s,border-radius .15s}
+#cur-ring{position:fixed;width:34px;height:34px;border:1.5px solid rgba(232,184,75,.2);
+  border-radius:50%;pointer-events:none;z-index:9998;transform:translate(-50%,-50%)}
+body:has(button:hover) #cur,body:has(a:hover) #cur{width:38px;height:38px;border-radius:8px;opacity:.1}
+
+/* ── SHELL ── */
+.app{display:flex;height:100vh;overflow:hidden}
+
+/* ── SIDEBAR ── */
+.sidebar{width:220px;flex-shrink:0;background:var(--navy);
+  border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
+.sb-top{padding:18px 14px 14px;border-bottom:1px solid var(--border)}
+.sb-logo{display:flex;align-items:center;gap:8px;text-decoration:none;margin-bottom:16px;
+  opacity:.7;transition:opacity .15s}
+.sb-logo:hover{opacity:1}
+.sb-logo-mark{width:24px;height:24px;border-radius:6px;background:var(--gold);
+  display:flex;align-items:center;justify-content:center}
+.sb-logo-mark svg{width:11px;height:11px;stroke:var(--night);fill:none;
+  stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
+.sb-logo-name{font-size:14px;font-weight:700;color:var(--text)}
+.user-card{display:flex;align-items:center;gap:9px}
+.user-av{width:32px;height:32px;border-radius:50%;background:var(--gold);
+  display:flex;align-items:center;justify-content:center;
+  font-size:12px;font-weight:700;color:var(--night);flex-shrink:0}
+.user-name{font-size:13px;font-weight:600;color:var(--text)}
+.user-type{font-size:11px;color:var(--gold);margin-top:1px}
+.sb-nav{padding:10px 8px 4px}
+.sb-sec-label{font-size:9px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--text4);padding:0 8px;margin:10px 0 3px}
+.sb-sec-label:first-child{margin-top:0}
+.nav-item{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:9px;
+  font-size:13px;font-weight:400;color:var(--text3);cursor:none;
+  transition:all .15s;margin-bottom:1px;text-decoration:none}
+.nav-item:hover{background:rgba(255,255,255,.04);color:var(--text2)}
+.nav-item.active{background:var(--gold-dim);color:var(--gold);font-weight:500}
+.nav-item svg{width:14px;height:14px;flex-shrink:0;stroke:currentColor;
+  fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;opacity:.6}
+.nav-item.active svg{opacity:1}
+.nav-badge{margin-left:auto;font-size:10px;font-weight:700;
+  background:var(--gold);color:var(--night);padding:1px 6px;border-radius:5px}
+.sb-footer{margin-top:auto;padding:12px 14px;border-top:1px solid var(--border)}
+.sb-footer-text{font-size:11px;color:var(--text3);line-height:1.6}
+.sb-footer-text a{color:var(--gold);text-decoration:none}
+
+/* ── MAIN ── */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.topbar{display:flex;align-items:center;justify-content:space-between;
+  padding:0 28px;height:54px;flex-shrink:0;border-bottom:1px solid var(--border);
+  background:rgba(8,13,26,.8);backdrop-filter:blur(12px)}
+.topbar-left{display:flex;align-items:center;gap:12px}
+.page-title{font-size:15px;font-weight:600;color:var(--text)}
+.page-sub{font-size:12px;color:var(--text3)}
+.topbar-right{display:flex;align-items:center;gap:8px}
+.tb-btn{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:500;
+  color:var(--text2);background:rgba(255,255,255,.04);border:1px solid var(--border2);
+  padding:6px 12px;border-radius:7px;cursor:none;transition:background .15s;text-decoration:none}
+.tb-btn:hover{background:rgba(255,255,255,.07)}
+.tb-btn svg{width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:1.8;
+  stroke-linecap:round;stroke-linejoin:round}
+.live-pill{display:flex;align-items:center;gap:5px;font-size:11px;font-weight:600;
+  color:var(--green);background:var(--green-dim);border:1px solid rgba(62,207,142,.2);
+  padding:5px 10px;border-radius:20px}
+.live-dot{width:5px;height:5px;border-radius:50%;background:var(--green);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+/* ── PAGE CONTENT ── */
+.page-area{flex:1;overflow-y:auto;padding:24px 28px;display:flex;flex-direction:column;gap:20px}
+.page-area::-webkit-scrollbar{width:4px}
+.page-area::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+
+/* ── CARDS ── */
+.card{background:var(--navy2);border:1px solid var(--border);border-radius:14px;overflow:hidden}
+.card-hd{display:flex;align-items:center;justify-content:space-between;
+  padding:14px 18px;border-bottom:1px solid var(--border)}
+.card-title{font-size:13px;font-weight:600;color:var(--text)}
+.card-action{font-size:11px;font-weight:500;color:var(--text3);
+  cursor:none;transition:color .15s;background:none;border:none}
+.card-action:hover{color:var(--gold)}
+.card-body{padding:16px 18px}
+
+/* ── GRIDS ── */
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.g3{display:grid;grid-template-columns:2fr 1fr;gap:16px}
+
+/* ── STAT CARDS ── */
+.stat-card{background:var(--navy2);border:1px solid var(--border);
+  border-radius:14px;padding:16px 18px;transition:border-color .2s}
+.stat-card:hover{border-color:var(--border2)}
+.sc-lbl{font-size:10px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;
+  color:var(--text3);margin-bottom:8px}
+.sc-val{font-size:22px;font-weight:700;color:var(--text);letter-spacing:-.5px;line-height:1}
+.sc-sub{font-size:11px;font-weight:600;margin-top:5px}
+.up{color:var(--green)}.dn{color:var(--red)}.muted{color:var(--text3)}
+.sc-badge{display:inline-block;margin-top:6px;font-size:9px;font-weight:600;
+  letter-spacing:.06em;text-transform:uppercase;padding:2px 8px;border-radius:4px}
+.badge-g{background:var(--green-dim);color:var(--green)}
+.badge-gold{background:var(--gold-dim);color:var(--gold)}
+.badge-b{background:var(--accent-dim);color:var(--accent)}
+.badge-r{background:var(--red-dim);color:var(--red)}
+
+/* ── HOLDINGS ── */
+.holding{display:flex;align-items:center;gap:12px;padding:11px 0;
+  border-bottom:1px solid var(--border);transition:background .15s;cursor:none}
+.holding:last-child{border-bottom:none}
+.holding:hover{background:rgba(255,255,255,.02);margin:0 -18px;padding:11px 18px}
+.h-logo{width:32px;height:32px;border-radius:9px;background:var(--surface);
+  border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;
+  font-size:10px;font-weight:700;color:var(--text2);flex-shrink:0}
+.h-info{flex:1}
+.h-ticker{font-size:13px;font-weight:600;color:var(--text)}
+.h-name{font-size:11px;color:var(--text3);margin-top:1px}
+.h-bar-wrap{width:60px}
+.h-bar{height:3px;background:var(--border2);border-radius:2px;overflow:hidden;margin-bottom:3px}
+.h-bar-fill{height:100%;border-radius:2px}
+.h-weight{font-size:10px;color:var(--text3);text-align:right}
+.h-right{text-align:right}
+.h-val{font-size:13px;font-weight:600;color:var(--text)}
+.h-chg{font-size:11px;font-weight:600;margin-top:1px}
+
+/* ── AI CHAT DRAWER ── */
+.drawer{position:fixed;right:0;top:0;bottom:0;width:400px;
+  background:var(--navy);border-left:1px solid var(--border2);
+  display:none;flex-direction:column;z-index:400;
+  box-shadow:-8px 0 40px rgba(0,0,0,.5);
+  animation:slideIn .25s cubic-bezier(.16,1,.3,1)}
+@keyframes slideIn{from{transform:translateX(100%)}to{transform:translateX(0)}}
+.drawer.open{display:flex}
+.drawer-hd{display:flex;align-items:center;justify-content:space-between;
+  padding:16px 20px;border-bottom:1px solid var(--border);flex-shrink:0}
+.drawer-av{width:32px;height:32px;border-radius:50%;background:var(--gold);
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--serif);font-size:15px;font-style:italic;color:var(--night)}
+.drawer-title{font-size:14px;font-weight:600;color:var(--text)}
+.drawer-sub{font-size:11px;color:var(--text3);margin-top:1px}
+.drawer-close{width:28px;height:28px;border-radius:7px;background:rgba(255,255,255,.06);
+  border:none;cursor:none;color:var(--text2);font-size:14px;display:flex;
+  align-items:center;justify-content:center;transition:background .15s}
+.drawer-close:hover{background:rgba(255,255,255,.1)}
+.drawer-msgs{flex:1;overflow-y:auto;padding:16px 20px;display:flex;flex-direction:column;gap:12px}
+.drawer-msgs::-webkit-scrollbar{width:3px}
+.drawer-msgs::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+.d-msg{display:flex;gap:8px;align-items:flex-end;animation:msgIn .3s ease}
+@keyframes msgIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.d-msg.user{flex-direction:row-reverse}
+.d-av{width:24px;height:24px;border-radius:50%;flex-shrink:0;display:flex;
+  align-items:center;justify-content:center;font-size:10px;font-weight:700}
+.d-av.ai{background:var(--gold);color:var(--night);font-family:var(--serif);
+  font-style:italic;font-size:13px}
+.d-av.hu{background:var(--surface);color:var(--text2);border:1px solid var(--border2)}
+.d-bubble{max-width:84%;font-size:13px;line-height:1.65;padding:10px 14px;border-radius:12px}
+.d-bubble.ai{background:var(--navy2);border:1px solid var(--border2);color:var(--text);
+  border-radius:4px 12px 12px 12px}
+.d-bubble.hu{background:var(--navy3);border:1px solid var(--border);color:var(--text);
+  border-radius:12px 4px 12px 12px}
+.d-bubble strong{color:var(--gold);font-weight:600}
+.d-chips{display:flex;gap:5px;flex-wrap:wrap;margin-top:7px}
+.d-chip{font-size:10px;font-weight:500;padding:2px 8px;border-radius:5px;
+  color:var(--text2);border:1px solid var(--border)}
+.drawer-suggestions{padding:10px 20px;border-top:1px solid var(--border);
+  display:flex;gap:6px;flex-wrap:wrap;flex-shrink:0}
+.sugg{font-size:12px;color:var(--text2);background:rgba(255,255,255,.04);
+  border:1px solid var(--border2);padding:5px 11px;border-radius:20px;cursor:none;
+  transition:all .15s;white-space:nowrap}
+.sugg:hover{border-color:var(--gold-border);color:var(--gold);background:var(--gold-dim)}
+.drawer-input-row{padding:12px 16px;border-top:1px solid var(--border);
+  display:flex;gap:8px;align-items:flex-end;flex-shrink:0}
+.d-inp{flex:1;background:var(--navy2);border:1px solid var(--border2);border-radius:10px;
+  padding:10px 14px;font-size:13px;color:var(--text);font-family:var(--sans);
+  outline:none;resize:none;min-height:40px;max-height:100px;line-height:1.5;
+  transition:border-color .15s}
+.d-inp:focus{border-color:rgba(232,184,75,.4)}
+.d-inp::placeholder{color:var(--text3)}
+.d-send{width:36px;height:36px;border-radius:9px;background:var(--gold);border:none;
+  cursor:none;display:flex;align-items:center;justify-content:center;flex-shrink:0;
+  transition:opacity .15s}
+.d-send:hover{opacity:.88}
+.d-send svg{width:14px;height:14px;stroke:var(--night);fill:none;stroke-width:2.5;
+  stroke-linecap:round;stroke-linejoin:round}
+.typing-bubble{background:var(--navy2);border:1px solid var(--border2);
+  padding:12px 16px;border-radius:4px 12px 12px 12px;
+  display:flex;gap:5px;align-items:center}
+.t-dot{width:6px;height:6px;border-radius:50%;background:var(--text3);
+  animation:td .9s infinite}
+.t-dot:nth-child(2){animation-delay:.15s}
+.t-dot:nth-child(3){animation-delay:.3s}
+@keyframes td{0%,60%,100%{transform:translateY(0);opacity:.4}30%{transform:translateY(-5px);opacity:1}}
+
+/* ── SIGN IN MODAL ── */
+.modal-overlay{position:fixed;inset:0;background:rgba(8,13,26,.88);
+  backdrop-filter:blur(12px);z-index:500;display:none;
+  align-items:center;justify-content:center}
+.modal-overlay.open{display:flex}
+.modal{background:var(--navy2);border:1px solid var(--border2);border-radius:20px;
+  padding:40px 36px;width:100%;max-width:420px;position:relative;
+  box-shadow:0 32px 80px rgba(0,0,0,.6);
+  animation:modalIn .25s cubic-bezier(.16,1,.3,1)}
+@keyframes modalIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+.modal-close{position:absolute;top:16px;right:16px;width:28px;height:28px;
+  border-radius:8px;background:rgba(255,255,255,.06);border:none;cursor:none;
+  color:var(--text3);font-size:14px;display:flex;align-items:center;justify-content:center;
+  transition:all .15s}
+.modal-close:hover{background:rgba(255,255,255,.1);color:var(--text)}
+.modal-logo{display:flex;align-items:center;gap:8px;margin-bottom:24px}
+.modal-mark{width:28px;height:28px;border-radius:8px;background:var(--gold);
+  display:flex;align-items:center;justify-content:center}
+.modal-mark svg{width:12px;height:12px;stroke:var(--night);fill:none;stroke-width:2.5;
+  stroke-linecap:round;stroke-linejoin:round}
+.modal-brand{font-size:15px;font-weight:700;color:var(--text)}
+.modal-title{font-size:22px;font-weight:700;color:var(--text);margin-bottom:6px;letter-spacing:-.3px}
+.modal-sub{font-size:13px;color:var(--text2);margin-bottom:28px;line-height:1.6}
+.modal-field{margin-bottom:14px}
+.modal-label{font-size:11px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;
+  color:var(--text3);margin-bottom:7px}
+.modal-inp{width:100%;background:rgba(255,255,255,.05);border:1px solid var(--border2);
+  border-radius:10px;padding:12px 14px;font-size:14px;color:var(--text);
+  font-family:var(--sans);outline:none;transition:border-color .15s}
+.modal-inp:focus{border-color:rgba(232,184,75,.5)}
+.modal-inp::placeholder{color:var(--text3)}
+.modal-error{font-size:12px;color:var(--red);margin-top:-8px;margin-bottom:8px;display:none}
+.modal-error.show{display:block}
+.btn-modal{width:100%;margin-top:20px;font-size:14px;font-weight:700;
+  background:var(--gold);color:var(--night);border:none;padding:13px;
+  border-radius:10px;cursor:none;transition:opacity .15s;
+  box-shadow:0 2px 16px rgba(232,184,75,.25)}
+.btn-modal:hover{opacity:.9}
+.modal-divider{display:flex;align-items:center;gap:12px;margin:20px 0}
+.modal-div-line{flex:1;height:1px;background:var(--border)}
+.modal-div-text{font-size:12px;color:var(--text3)}
+.modal-footer{font-size:12px;color:var(--text3);text-align:center;line-height:1.7}
+.modal-footer a{color:var(--gold);text-decoration:none}
+.modal-footer a:hover{text-decoration:underline}
+
+/* ── NEWS ITEMS ── */
+.news-item{display:flex;gap:12px;padding:12px 0;border-bottom:1px solid var(--border);cursor:none;transition:opacity .15s}
+.news-item:last-child{border-bottom:none}
+.news-item:hover{opacity:.8}
+.news-src{font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--text3);margin-bottom:4px}
+.news-title{font-size:13px;font-weight:500;color:var(--text);line-height:1.45;margin-bottom:4px}
+.news-desc{font-size:12px;color:var(--text3);line-height:1.5}
+.news-meta{display:flex;align-items:center;gap:8px;margin-top:5px}
+.news-time{font-size:10px;color:var(--text4)}
+.news-tag{font-size:10px;font-weight:600;padding:2px 7px;border-radius:4px}
+.nt-pos{background:var(--green-dim);color:var(--green)}
+.nt-neg{background:var(--red-dim);color:var(--red)}
+.nt-neu{background:var(--accent-dim);color:var(--accent)}
+.news-img{width:56px;height:56px;border-radius:8px;background:var(--surface);
+  flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:20px}
+
+/* ── GOAL ITEMS ── */
+.goal-item{padding:14px 16px;border-radius:12px;border:1px solid var(--border);
+  background:rgba(255,255,255,.02);margin-bottom:10px}
+.goal-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.goal-name{font-size:14px;font-weight:500;color:var(--text)}
+.goal-horizon{font-size:11px;color:var(--text3)}
+.goal-bar-wrap{height:5px;background:var(--border2);border-radius:3px;overflow:hidden;margin-bottom:6px}
+.goal-bar-fill{height:100%;border-radius:3px;transition:width 1s cubic-bezier(.16,1,.3,1)}
+.gf-gold{background:var(--gold)}.gf-blue{background:var(--accent)}.gf-green{background:var(--green)}
+.goal-meta{display:flex;justify-content:space-between}
+.goal-cur{font-size:11px;color:var(--text3)}
+.goal-tgt{font-size:11px;font-weight:600;color:var(--text2)}
+.goal-status{font-size:11px;font-weight:600;padding:2px 8px;border-radius:6px;margin-top:6px;display:inline-block}
+
+/* ── SCENARIO CARDS ── */
+.scenario-card{padding:16px;border-radius:12px;border:1px solid var(--border);
+  background:rgba(255,255,255,.02);cursor:none;transition:border-color .2s,background .2s;margin-bottom:10px}
+.scenario-card:hover{border-color:var(--gold-border);background:var(--gold-dim)}
+.sc-header{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.sc-icon{width:32px;height:32px;border-radius:9px;background:var(--gold-dim);
+  display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+.sc-name{font-size:14px;font-weight:500;color:var(--text)}
+.sc-impact{font-size:11px;color:var(--text3);margin-top:1px}
+.sc-desc{font-size:12px;color:var(--text2);line-height:1.6}
+
+/* ── SETTINGS ── */
+.settings-section{margin-bottom:28px}
+.settings-title{font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--text3);margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--border)}
+.settings-row{display:flex;align-items:center;justify-content:space-between;
+  padding:14px 0;border-bottom:1px solid var(--border)}
+.settings-row:last-child{border-bottom:none}
+.settings-key{font-size:13px;font-weight:500;color:var(--text)}
+.settings-sub{font-size:11px;color:var(--text3);margin-top:2px}
+.settings-val{font-size:13px;color:var(--text2)}
+.toggle{width:40px;height:22px;border-radius:11px;background:var(--border2);
+  cursor:none;transition:background .2s;position:relative;flex-shrink:0;border:none}
+.toggle.on{background:var(--gold)}
+.toggle::after{content:'';position:absolute;top:3px;left:3px;width:16px;height:16px;
+  border-radius:50%;background:white;transition:transform .2s}
+.toggle.on::after{transform:translateX(18px)}
+.btn-settings{font-size:12px;font-weight:600;color:var(--gold);background:var(--gold-dim);
+  border:1px solid var(--gold-border);padding:5px 12px;border-radius:7px;cursor:none;
+  transition:all .15s}
+.btn-settings:hover{background:rgba(232,184,75,.18)}
+
+/* ── PORTFOLIO PAGE ── */
+.alloc-donut{position:relative;width:100px;height:100px;flex-shrink:0}
+.alloc-donut svg{transform:rotate(-90deg)}
+.alloc-center{position:absolute;inset:0;display:flex;flex-direction:column;
+  align-items:center;justify-content:center}
+.alloc-pct{font-size:16px;font-weight:700;color:var(--text)}
+.alloc-lbl{font-size:9px;color:var(--text3)}
+.legend-item{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.legend-dot{width:8px;height:8px;border-radius:2px;flex-shrink:0}
+.legend-name{font-size:12px;color:var(--text2);flex:1}
+.legend-pct{font-size:12px;font-weight:600;color:var(--text)}
+
+/* ── CHART ── */
+.chart-wrap{position:relative;height:130px;margin-bottom:10px}
+.chart-labels{display:flex;justify-content:space-between}
+.chart-lbl{font-size:10px;color:var(--text3)}
+
+/* ── FADE IN ── */
+.fi{opacity:0;transform:translateY(8px);animation:fi .5s cubic-bezier(.16,1,.3,1) forwards}
+@keyframes fi{to{opacity:1;transform:translateY(0)}}
+.fi:nth-child(1){animation-delay:.04s}.fi:nth-child(2){animation-delay:.08s}
+.fi:nth-child(3){animation-delay:.12s}.fi:nth-child(4){animation-delay:.16s}
+.fi:nth-child(5){animation-delay:.2s}.fi:nth-child(6){animation-delay:.24s}
+.fi:nth-child(7){animation-delay:.28s}.fi:nth-child(8){animation-delay:.32s}
+</style>
+</head>
+<body>
+<div id="cur"></div>
+<div id="cur-ring"></div>
+
+<div class="app">
+
+<!-- ── SIDEBAR ── -->
+<div class="sidebar">
+  <div class="sb-top">
+    <a href="verso_v5.html" class="sb-logo">
+      <div class="sb-logo-mark"><svg viewBox="0 0 16 16"><polyline points="2,12 6,6 10,9 14,3"/></svg></div>
+      <span class="sb-logo-name">Verso</span>
+    </a>
+    <div class="user-card">
+      <div class="user-av" id="sbUserAv">P</div>
+      <div>
+        <div class="user-name" id="sbUserName">Priya K.</div>
+        <div class="user-type" id="sbUserType">Balanced Growth</div>
+      </div>
+    </div>
+  </div>
+  <div class="sb-nav">
+    <div class="sb-sec-label">Overview</div>
+    <a class="nav-item" id="nav-dashboard" href="verso_app.html" onclick="showPage('dashboard');return false">
+      <svg viewBox="0 0 14 14"><rect x="1" y="1" width="5" height="5" rx="1.5"/><rect x="8" y="1" width="5" height="5" rx="1.5"/><rect x="1" y="8" width="5" height="5" rx="1.5"/><rect x="8" y="8" width="5" height="5" rx="1.5"/></svg>
+      Dashboard
+    </a>
+    <a class="nav-item" id="nav-portfolio" href="#" onclick="showPage('portfolio');return false">
+      <svg viewBox="0 0 14 14"><polyline points="1,11 4,7 7,9 10,4 13,6"/></svg>
+      Portfolio
+    </a>
+    <a class="nav-item" id="nav-goals" href="#" onclick="showPage('goals');return false">
+      <svg viewBox="0 0 14 14"><circle cx="7" cy="7" r="5"/><path d="M7 4.5V7l1.5 1.5"/></svg>
+      Goals
+    </a>
+    <div class="sb-sec-label">Verso AI</div>
+    <a class="nav-item" id="nav-ask" href="#" onclick="openDrawer('');return false">
+      <svg viewBox="0 0 14 14"><path d="M2 9V4a1 1 0 011-1h8a1 1 0 011 1v4a1 1 0 01-1 1H5l-3 2z"/></svg>
+      Ask Verso
+    </a>
+    <a class="nav-item" id="nav-news" href="#" onclick="showPage('news');return false">
+      <svg viewBox="0 0 14 14"><path d="M2 3.5h10M2 7h7M2 10.5h9"/></svg>
+      News
+      <span class="nav-badge">5</span>
+    </a>
+    <a class="nav-item" id="nav-scenarios" href="#" onclick="showPage('scenarios');return false">
+      <svg viewBox="0 0 14 14"><path d="M7 1l1.5 3 3.5.5-2.5 2.5.5 3.5L7 9l-3 1.5.5-3.5L2 4.5 5.5 4z"/></svg>
+      Scenarios
+    </a>
+    <div class="sb-sec-label">Account</div>
+    <a class="nav-item" id="nav-profile" href="verso_agent.html">
+      <svg viewBox="0 0 14 14"><circle cx="7" cy="5" r="2.5"/><path d="M2 12c0-2.8 2.2-5 5-5s5 2.2 5 5"/></svg>
+      My Profile
+    </a>
+    <a class="nav-item" id="nav-settings" href="#" onclick="showPage('settings');return false">
+      <svg viewBox="0 0 14 14"><circle cx="7" cy="7" r="2"/><path d="M7 1v2M7 11v2M1 7h2M11 7h2M2.9 2.9l1.4 1.4M9.7 9.7l1.4 1.4M2.9 11.1l1.4-1.4M9.7 4.3l1.4-1.4"/></svg>
+      Settings
+    </a>
+  </div>
+  <div class="sb-footer">
+    <div class="sb-footer-text">Educational guidance only.<br><a href="#">Not financial advice.</a></div>
+  </div>
+</div>
+
+<!-- ── MAIN ── -->
+<div class="main">
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="page-title" id="pageTitle">Dashboard</div>
+      <div class="page-sub" id="pageSub">Friday, May 2 · Market open</div>
+    </div>
+    <div class="topbar-right">
+      <div class="live-pill"><span class="live-dot"></span>Live</div>
+      <a class="tb-btn" href="#" onclick="openDrawer('');return false">
+        <svg viewBox="0 0 14 14"><path d="M2 9V4a1 1 0 011-1h8a1 1 0 011 1v4a1 1 0 01-1 1H5l-3 2z"/></svg>
+        Ask Verso
+      </a>
+      <a class="tb-btn" href="#" onclick="openModal();return false">
+        <svg viewBox="0 0 14 14"><circle cx="7" cy="5" r="2.5"/><path d="M2 12c0-2.8 2.2-5 5-5s5 2.2 5 5"/></svg>
+        <span id="tbUserName">Priya K.</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- PAGE PANELS -->
+  <div class="page-area" id="page-dashboard"><!-- DASHBOARD --></div>
+  <div class="page-area" id="page-portfolio" style="display:none"><!-- PORTFOLIO --></div>
+  <div class="page-area" id="page-goals" style="display:none"><!-- GOALS --></div>
+  <div class="page-area" id="page-news" style="display:none"><!-- NEWS --></div>
+  <div class="page-area" id="page-scenarios" style="display:none"><!-- SCENARIOS --></div>
+  <div class="page-area" id="page-settings" style="display:none"><!-- SETTINGS --></div>
+</div>
+</div>
+
+<!-- ── AI CHAT DRAWER ── -->
+<div class="drawer" id="aiDrawer">
+  <div class="drawer-hd">
+    <div style="display:flex;align-items:center;gap:10px">
+      <div class="drawer-av">V</div>
+      <div>
+        <div class="drawer-title">Ask Verso</div>
+        <div class="drawer-sub" style="display:flex;align-items:center;gap:4px">
+          <span style="width:5px;height:5px;border-radius:50%;background:var(--green);display:inline-block"></span>
+          Analyzing your portfolio live
+        </div>
+      </div>
+    </div>
+    <button class="drawer-close" onclick="closeDrawer()">✕</button>
+  </div>
+  <div class="drawer-msgs" id="drawerMsgs"></div>
+  <div class="drawer-suggestions" id="drawerSuggs">
+    <button class="sugg" onclick="sendQ('Why is my tech allocation high?')">Why is tech high?</button>
+    <button class="sugg" onclick="sendQ('Am I on track for retirement?')">Am I on track?</button>
+    <button class="sugg" onclick="sendQ('What if markets drop 20%?')">Markets drop 20%?</button>
+    <button class="sugg" onclick="sendQ('When should I rebalance?')">When rebalance?</button>
+    <button class="sugg" onclick="sendQ('Should I increase contributions?')">Increase contributions?</button>
+  </div>
+  <div class="drawer-input-row">
+    <textarea class="d-inp" id="dInp" placeholder="Ask anything about your portfolio…" rows="1"></textarea>
+    <button class="d-send" onclick="sendDrawerMsg()">
+      <svg viewBox="0 0 14 14"><line x1="3" y1="7" x2="11" y2="7"/><polyline points="8,4 11,7 8,10"/></svg>
+    </button>
+  </div>
+</div>
+
+<!-- ── SIGN IN MODAL ── -->
+<div class="modal-overlay" id="signinModal" onclick="closeModalOutside(event)">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <div class="modal-logo">
+      <div class="modal-mark"><svg viewBox="0 0 16 16"><polyline points="2,12 6,6 10,9 14,3"/></svg></div>
+      <span class="modal-brand">Verso</span>
+    </div>
+    <div class="modal-title" id="modalTitle">Welcome back</div>
+    <div class="modal-sub" id="modalSub">Sign in to your account to continue.</div>
+    <div class="modal-field">
+      <div class="modal-label">Email</div>
+      <input class="modal-inp" id="modalEmail" type="email" placeholder="you@example.com"/>
+    </div>
+    <div class="modal-field" id="modalPwField">
+      <div class="modal-label">Password</div>
+      <input class="modal-inp" id="modalPw" type="password" placeholder="••••••••"/>
+    </div>
+    <div class="modal-error" id="modalError">No account found with that email. Try building your profile first.</div>
+    <button class="btn-modal" id="modalBtn" onclick="handleSignIn()">Sign in to Verso</button>
+    <div class="modal-divider">
+      <div class="modal-div-line"></div>
+      <span class="modal-div-text">new here?</span>
+      <div class="modal-div-line"></div>
+    </div>
+    <div class="modal-footer">
+      <a href="verso_agent.html">Build your investor profile →</a><br/>
+      <span style="margin-top:5px;display:block">Forgot password? <a href="#">Reset it</a></span>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── DEMO USER DATA ──
+const USER = {name:'Priya K.',initials:'P',type:'Balanced Growth',
+  portfolio:24680,gain:312,gainPct:8.4,riskScore:6.2,
+  eq:65,bond:28,cash:7};
+
+// ── EXISTING ACCOUNTS (demo) ──
+const ACCOUNTS = {
+  'priya@example.com':'password123',
+  'demo@verso.app':'demo1234',
+  'yashaswir3@gmail.com':'verso2025'
+};
+
+// ── PAGE ROUTING ──
+const pages = ['dashboard','portfolio','goals','news','scenarios','settings'];
+const pageTitles = {
+  dashboard:'Dashboard',portfolio:'Portfolio',goals:'Goals',
+  news:'Market News',scenarios:'Scenarios',settings:'Settings'
+};
+const pageSubs = {
+  dashboard:'Friday, May 2 · Market open',
+  portfolio:'Your holdings and allocation',
+  goals:'Track progress toward your goals',
+  news:'Latest news relevant to your portfolio',
+  scenarios:'Model what-if situations',
+  settings:'Account and preferences'
+};
+
+function showPage(p) {
+  pages.forEach(pg => {
+    const el = document.getElementById('page-'+pg);
+    if (el) el.style.display = pg===p ? 'flex' : 'none';
+    const nav = document.getElementById('nav-'+pg);
+    if (nav) nav.classList.toggle('active', pg===p);
+  });
+  document.getElementById('pageTitle').textContent = pageTitles[p]||p;
+  document.getElementById('pageSub').textContent = pageSubs[p]||'';
+  // close drawer when switching pages
+  document.getElementById('aiDrawer').classList.remove('open');
+}
+
+// ── RENDER PAGES ──
+function renderDashboard() {
+  document.getElementById('page-dashboard').innerHTML = `
+  <div class="g4 fi">
+    <div class="stat-card"><div class="sc-lbl">Portfolio value</div><div class="sc-val">$${USER.portfolio.toLocaleString()}</div><div class="sc-sub up">+$${USER.gain} today</div><div class="sc-badge badge-g">+${USER.gainPct}% since Jan</div></div>
+    <div class="stat-card"><div class="sc-lbl">On track for</div><div class="sc-val" style="font-size:16px;line-height:1.3">Retirement<br>2048</div><div class="sc-sub up">Yes ✓</div><div class="sc-badge badge-g">At current rate</div></div>
+    <div class="stat-card"><div class="sc-lbl">Risk score</div><div class="sc-val">${USER.riskScore}<span style="font-size:14px;color:var(--text3);font-weight:400">/10</span></div><div class="sc-sub muted">Balanced growth</div><div class="sc-badge badge-gold">Within target band</div></div>
+    <div class="stat-card"><div class="sc-lbl">Next action</div><div class="sc-val" style="font-size:15px;line-height:1.35">Rebalance<br>bonds</div><div class="sc-sub" style="color:var(--gold)">Suggested by Verso</div><div class="sc-badge badge-gold">In ~6 weeks</div></div>
+  </div>
+  <div class="fi" style="background:var(--navy3);border:1px solid var(--border);border-radius:14px;padding:16px 18px;display:flex;align-items:center;gap:14px">
+    <div style="width:38px;height:38px;border-radius:50%;background:var(--gold);display:flex;align-items:center;justify-content:center;font-family:var(--serif);font-size:17px;font-style:italic;color:var(--night);flex-shrink:0;box-shadow:0 0 0 3px rgba(232,184,75,.12)">V</div>
+    <div style="flex:1">
+      <div style="font-size:13px;color:var(--text2);line-height:1.6">Good morning ${USER.name.split(' ')[0]}. <strong style="color:var(--gold)">Your portfolio is up $${USER.gain} today</strong> and on track for retirement. Tech is 74% of equity — within range, I'll flag when to act.</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px">
+        ${['Why is tech high?','What if markets drop 20%?','Am I saving enough?','When to rebalance?'].map(q=>`<button onclick="openDrawer('${q}')" style="font-size:12px;font-weight:400;color:var(--text2);background:rgba(255,255,255,.04);border:1px solid var(--border2);padding:5px 12px;border-radius:20px;cursor:none;transition:all .15s" onmouseover="this.style.borderColor='rgba(232,184,75,.4)';this.style.color='var(--gold)'" onmouseout="this.style.borderColor='var(--border2)';this.style.color='var(--text2)'">${q}</button>`).join('')}
+      </div>
+    </div>
+    <button onclick="openDrawer('')" style="font-size:13px;font-weight:600;background:var(--gold);color:var(--night);border:none;padding:9px 18px;border-radius:9px;cursor:none;white-space:nowrap">Ask Verso →</button>
+  </div>
+  <div class="g3 fi">
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <div class="card">
+        <div class="card-hd"><span class="card-title">Portfolio performance</span>
+          <div style="display:flex;gap:4px">
+            <button class="card-action" style="background:var(--gold-dim);color:var(--gold);border:1px solid var(--gold-border);padding:3px 9px;border-radius:6px;font-size:11px">1M</button>
+            ${['3M','1Y','All'].map(t=>`<button class="card-action" style="padding:3px 9px;border-radius:6px;font-size:11px">${t}</button>`).join('')}
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="chart-wrap">
+            <svg style="width:100%;height:100%" viewBox="0 0 400 120" preserveAspectRatio="none">
+              <defs><linearGradient id="cg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#e8b84b" stop-opacity="0.18"/><stop offset="100%" stop-color="#e8b84b" stop-opacity="0"/></linearGradient></defs>
+              <path d="M0,105 C30,102 60,98 90,90 C120,82 145,75 170,67 C195,59 220,55 245,48 C270,41 295,44 320,37 C345,30 365,22 390,14 L390,120 L0,120 Z" fill="url(#cg)"/>
+              <path d="M0,105 C30,102 60,98 90,90 C120,82 145,75 170,67 C195,59 220,55 245,48 C270,41 295,44 320,37 C345,30 365,22 390,14" fill="none" stroke="#e8b84b" stroke-width="2" stroke-linecap="round"/>
+              <circle cx="390" cy="14" r="4" fill="#e8b84b"/>
+              <circle cx="390" cy="14" r="8" fill="#e8b84b" opacity="0.2"/>
+            </svg>
+          </div>
+          <div class="chart-labels">${['Apr 1','Apr 8','Apr 15','Apr 22','May 2'].map(l=>`<span class="chart-lbl">${l}</span>`).join('')}</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-hd"><span class="card-title">Holdings</span><button class="card-action" onclick="showPage('portfolio')">View all →</button></div>
+        <div class="card-body" style="padding:4px 18px 12px">
+          ${[['NVDA','Nvidia Corp',11200,3.4,45,'var(--gold)'],['AAPL','Apple Inc',8230,1.8,33,'var(--accent)'],['BND','Vanguard Bond ETF',5250,-0.2,21,'var(--green)']].map(([t,n,v,c,w,col])=>`
+          <div class="holding">
+            <div class="h-logo" style="font-size:9px">${t}</div>
+            <div class="h-info"><div class="h-ticker">${t}</div><div class="h-name">${n}</div></div>
+            <div class="h-bar-wrap"><div class="h-bar"><div class="h-bar-fill" style="width:${w}%;background:${col}"></div></div><div class="h-weight">${w}%</div></div>
+            <div class="h-right"><div class="h-val">$${v.toLocaleString()}</div><div class="h-chg ${c>=0?'up':'dn'}">${c>=0?'+':''}${c}%</div></div>
+          </div>`).join('')}
+        </div>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <div class="card">
+        <div class="card-hd"><span class="card-title">Allocation</span><button class="card-action">Target 65/28/7</button></div>
+        <div class="card-body">
+          <div style="display:flex;align-items:center;gap:16px;margin-bottom:14px">
+            <div class="alloc-donut">
+              <svg viewBox="0 0 100 100" width="100" height="100">
+                <circle cx="50" cy="50" r="38" fill="none" stroke="var(--accent)" stroke-width="12" stroke-dasharray="60 179" stroke-dashoffset="0"/>
+                <circle cx="50" cy="50" r="38" fill="none" stroke="var(--green)" stroke-width="12" stroke-dasharray="17 222" stroke-dashoffset="-60"/>
+                <circle cx="50" cy="50" r="38" fill="none" stroke="var(--gold)" stroke-width="12" stroke-dasharray="148 91" stroke-dashoffset="-77"/>
+              </svg>
+              <div class="alloc-center"><div class="alloc-pct">65%</div><div class="alloc-lbl">equity</div></div>
+            </div>
+            <div style="flex:1">
+              ${[['var(--gold)','Equity','65%'],['var(--accent)','Bonds','28%'],['var(--green)','Cash','7%']].map(([c,n,p])=>`<div class="legend-item"><div class="legend-dot" style="background:${c}"></div><span class="legend-name">${n}</span><span class="legend-pct">${p}</span></div>`).join('')}
+            </div>
+          </div>
+          <div style="padding:10px 12px;border-left:2px solid var(--gold);background:rgba(232,184,75,.04);border-radius:0 8px 8px 0;font-size:12px;color:var(--text2);line-height:1.6"><strong style="color:var(--gold);font-weight:600">On target.</strong> Allocation matches your Balanced Growth profile.</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-hd"><span class="card-title">Latest News</span><button class="card-action" onclick="showPage('news')">See all →</button></div>
+        <div class="card-body" style="padding:8px 16px 12px">
+          ${[['📈','NVDA Earnings Beat','Nvidia posts 18% revenue growth, beats estimates.','2h ago','nt-pos'],['🏦','Fed Holds Rates','Federal Reserve holds rates steady at May meeting.','4h ago','nt-neu'],['📉','Tech Selloff Watch','Analysts flag concentration risk in retail portfolios.','6h ago','nt-neg']].map(([ic,ti,de,tm,tg])=>`
+          <div style="display:flex;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);cursor:none" onclick="showPage('news')">
+            <div style="width:36px;height:36px;border-radius:8px;background:var(--surface);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0">${ic}</div>
+            <div style="flex:1"><div style="font-size:12px;font-weight:500;color:var(--text);line-height:1.4;margin-bottom:3px">${ti}</div><div style="font-size:11px;color:var(--text3)">${de}</div><div style="display:flex;align-items:center;gap:6px;margin-top:4px"><span style="font-size:10px;color:var(--text4)">${tm}</span><span class="news-tag ${tg}" style="font-size:10px;font-weight:600;padding:1px 6px;border-radius:4px">${tg.includes('pos')?'Positive':tg.includes('neg')?'Negative':'Neutral'}</span></div></div>
+          </div>`).join('')}
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function renderPortfolio() {
+  document.getElementById('page-portfolio').innerHTML = `
+  <div class="g4 fi">
+    <div class="stat-card"><div class="sc-lbl">Total value</div><div class="sc-val">$24,680</div><div class="sc-sub up">+$312 today</div></div>
+    <div class="stat-card"><div class="sc-lbl">All-time return</div><div class="sc-val">+$1,940</div><div class="sc-sub up">+8.4% total</div></div>
+    <div class="stat-card"><div class="sc-lbl">Best performer</div><div class="sc-val" style="font-size:16px">NVDA</div><div class="sc-sub up">+3.4% today</div></div>
+    <div class="stat-card"><div class="sc-lbl">Diversification</div><div class="sc-val" style="font-size:16px">Moderate</div><div class="sc-sub" style="color:var(--gold)">3 asset classes</div></div>
+  </div>
+  <div class="g2 fi">
+    <div class="card">
+      <div class="card-hd"><span class="card-title">All Holdings</span><button class="card-action" onclick="openDrawer('How should I rebalance my portfolio?')">Ask Verso about this</button></div>
+      <div class="card-body" style="padding:4px 18px 14px">
+        ${[
+          ['NVDA','Nvidia Corp',11200,3.4,45,'var(--gold)','Large Cap Equity','High'],
+          ['AAPL','Apple Inc',8230,1.8,33,'var(--accent)','Large Cap Equity','Medium'],
+          ['BND','Vanguard Bond ETF',5250,-0.2,21,'var(--green)','Bond ETF','Low'],
+          ['CASH','Cash & Equivalents',2000,0,8,'var(--text3)','Cash','Very Low'],
+        ].map(([t,n,v,c,w,col,cat,risk])=>`
+        <div class="holding">
+          <div class="h-logo" style="font-size:9px">${t}</div>
+          <div class="h-info"><div class="h-ticker">${t}</div><div class="h-name">${n}</div><div style="font-size:10px;color:var(--text4);margin-top:2px">${cat} · Risk: ${risk}</div></div>
+          <div class="h-bar-wrap"><div class="h-bar"><div class="h-bar-fill" style="width:${w}%;background:${col}"></div></div><div class="h-weight">${w}%</div></div>
+          <div class="h-right"><div class="h-val">$${v.toLocaleString()}</div><div class="h-chg ${c>0?'up':c<0?'dn':'muted'}">${c>0?'+':''}${c}%</div></div>
+        </div>`).join('')}
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <div class="card">
+        <div class="card-hd"><span class="card-title">Allocation breakdown</span></div>
+        <div class="card-body">
+          <div style="display:flex;align-items:center;gap:16px;margin-bottom:16px">
+            <div class="alloc-donut">
+              <svg viewBox="0 0 100 100" width="100" height="100">
+                <circle cx="50" cy="50" r="38" fill="none" stroke="var(--accent)" stroke-width="12" stroke-dasharray="60 179" stroke-dashoffset="0"/>
+                <circle cx="50" cy="50" r="38" fill="none" stroke="var(--green)" stroke-width="12" stroke-dasharray="17 222" stroke-dashoffset="-60"/>
+                <circle cx="50" cy="50" r="38" fill="none" stroke="var(--gold)" stroke-width="12" stroke-dasharray="148 91" stroke-dashoffset="-77"/>
+              </svg>
+              <div class="alloc-center"><div class="alloc-pct">65%</div><div class="alloc-lbl">equity</div></div>
+            </div>
+            <div style="flex:1">
+              ${[['var(--gold)','Equity','65%','Target 65%'],['var(--accent)','Bonds','28%','Target 28%'],['var(--green)','Cash','7%','Target 7%']].map(([c,n,p,t])=>`
+              <div class="legend-item" style="margin-bottom:10px"><div class="legend-dot" style="background:${c}"></div><div style="flex:1"><span class="legend-name">${n}</span><div style="font-size:10px;color:var(--text4)">${t}</div></div><span class="legend-pct">${p}</span></div>`).join('')}
+            </div>
+          </div>
+          <div style="padding:10px 12px;border-left:2px solid var(--green);background:var(--green-dim);border-radius:0 8px 8px 0;font-size:12px;color:var(--text2)"><strong style="color:var(--green);font-weight:600">On target.</strong> All allocations within 2% of target bands.</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-hd"><span class="card-title">Risk analysis</span><button class="card-action" onclick="openDrawer('Explain my portfolio risk')">Ask Verso</button></div>
+        <div class="card-body">
+          ${[['Concentration risk','High — 78% in 2 stocks','var(--red)'],['Sector risk','High — 74% tech','var(--gold)'],['Duration risk','Low — short bonds','var(--green)'],['Liquidity','High — all liquid','var(--green)']].map(([k,v,c])=>`
+          <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)"><span style="font-size:12px;color:var(--text2)">${k}</span><span style="font-size:12px;font-weight:600;color:${c}">${v}</span></div>`).join('')}
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function renderGoals() {
+  document.getElementById('page-goals').innerHTML = `
+  <div class="g4 fi">
+    <div class="stat-card"><div class="sc-lbl">Active goals</div><div class="sc-val">2</div><div class="sc-sub muted">Retirement · Home</div></div>
+    <div class="stat-card"><div class="sc-lbl">Total saved</div><div class="sc-val">$45,680</div><div class="sc-sub up">Across all goals</div></div>
+    <div class="stat-card"><div class="sc-lbl">Monthly contributions</div><div class="sc-val">$700</div><div class="sc-sub muted">Auto-invest on</div></div>
+    <div class="stat-card"><div class="sc-lbl">Projected by 2048</div><div class="sc-val">$620K</div><div class="sc-sub" style="color:var(--gold)">$180K short of target</div></div>
+  </div>
+  <div class="g2 fi">
+    <div>
+      <div class="card" style="margin-bottom:14px">
+        <div class="card-hd"><span class="card-title">Retirement 2048 🏖️</span><button class="card-action" onclick="openDrawer('Am I on track for retirement?')">Ask Verso</button></div>
+        <div class="card-body">
+          <div style="display:flex;justify-content:space-between;margin-bottom:10px">
+            <div><div style="font-size:22px;font-weight:700;color:var(--text)">$24,680</div><div style="font-size:11px;color:var(--text3)">saved so far</div></div>
+            <div style="text-align:right"><div style="font-size:22px;font-weight:700;color:var(--text3)">$800,000</div><div style="font-size:11px;color:var(--text3)">target</div></div>
+          </div>
+          <div style="height:8px;background:var(--border2);border-radius:4px;overflow:hidden;margin-bottom:8px">
+            <div style="width:3%;height:100%;background:var(--gold);border-radius:4px;transition:width 1s"></div>
+          </div>
+          <div style="font-size:12px;color:var(--text3);margin-bottom:14px">3% funded · 23 years remaining</div>
+          <div style="padding:12px 14px;border-left:2px solid var(--gold);background:rgba(232,184,75,.04);border-radius:0 8px 8px 0;font-size:12px;color:var(--text2);line-height:1.6">
+            <strong style="color:var(--gold)">Verso says:</strong> At $700/month with 7% average return, you'll reach ~$620K by 2048. Increasing to $900/month closes the gap significantly. Consider increasing contributions when income grows.
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-hd"><span class="card-title">Home purchase 🏠</span><button class="card-action" onclick="openDrawer('Am I on track for my home purchase goal?')">Ask Verso</button></div>
+        <div class="card-body">
+          <div style="display:flex;justify-content:space-between;margin-bottom:10px">
+            <div><div style="font-size:22px;font-weight:700;color:var(--text)">$21,000</div><div style="font-size:11px;color:var(--text3)">saved so far</div></div>
+            <div style="text-align:right"><div style="font-size:22px;font-weight:700;color:var(--text3)">$50,000</div><div style="font-size:11px;color:var(--text3)">target</div></div>
+          </div>
+          <div style="height:8px;background:var(--border2);border-radius:4px;overflow:hidden;margin-bottom:8px">
+            <div style="width:42%;height:100%;background:var(--accent);border-radius:4px;transition:width 1s"></div>
+          </div>
+          <div style="font-size:12px;color:var(--text3);margin-bottom:14px">42% funded · 4 years remaining · On track ✓</div>
+          <div style="padding:12px 14px;border-left:2px solid var(--green);background:var(--green-dim);border-radius:0 8px 8px 0;font-size:12px;color:var(--text2);line-height:1.6">
+            <strong style="color:var(--green)">On track.</strong> At your current savings rate you'll hit the $50K down payment by mid-2029 — 6 months ahead of schedule.
+          </div>
+        </div>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <div class="card">
+        <div class="card-hd"><span class="card-title">Projection to 2048</span></div>
+        <div class="card-body">
+          <div class="chart-wrap">
+            <svg style="width:100%;height:100%" viewBox="0 0 300 110" preserveAspectRatio="none">
+              <defs><linearGradient id="pg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#4f7fff" stop-opacity="0.2"/><stop offset="100%" stop-color="#4f7fff" stop-opacity="0"/></linearGradient></defs>
+              <path d="M0,108 C50,105 100,95 150,75 C200,55 250,30 290,8 L290,110 L0,110 Z" fill="url(#pg)"/>
+              <path d="M0,108 C50,105 100,95 150,75 C200,55 250,30 290,8" fill="none" stroke="var(--accent)" stroke-width="2"/>
+              <line x1="0" y1="25" x2="290" y2="25" stroke="var(--gold)" stroke-width="1" stroke-dasharray="4 3" opacity="0.5"/>
+              <text x="4" y="22" fill="var(--gold)" font-size="8" opacity="0.8">$800K target</text>
+            </svg>
+          </div>
+          <div class="chart-labels">${['Now','2030','2035','2040','2048'].map(l=>`<span class="chart-lbl">${l}</span>`).join('')}</div>
+          <div style="margin-top:12px;font-size:12px;color:var(--text3)">At current rate: <strong style="color:var(--text)">$620K</strong><br>With $900/mo: <strong style="color:var(--green)">$820K ✓</strong></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-hd"><span class="card-title">Add a goal</span></div>
+        <div class="card-body">
+          ${['Education fund 🎓','Emergency buffer 🛡️','Big purchase ✈️','Wealth building 📈'].map(g=>`
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--border)">
+            <span style="font-size:13px;color:var(--text2)">${g}</span>
+            <button onclick="openDrawer('Help me set up a ${g.replace(/[^\w\s]/gi,'')} goal')" style="font-size:11px;font-weight:600;color:var(--gold);background:var(--gold-dim);border:1px solid var(--gold-border);padding:3px 10px;border-radius:6px;cursor:none">+ Add</button>
+          </div>`).join('')}
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function renderNews() {
+  const newsItems = [
+    ['📈','Reuters','Nvidia Posts Record Revenue in Q1 2026','Nvidia reported a 122% year-over-year revenue increase, driven by data center and AI chip demand. Shares rose 3.4% in after-hours trading. Your NVDA position is your largest holding — this directly impacts your portfolio.','2h ago','nt-pos','Impacts your NVDA'],
+    ['🏦','Bloomberg','Federal Reserve Holds Rates Steady at May Meeting','The Fed voted unanimously to hold the federal funds rate at 5.25%–5.50%. Chair Powell signaled patience, citing mixed inflation data. Low impact on your current bond allocation.','4h ago','nt-neu','Low portfolio impact'],
+    ['⚠️','WSJ','Analysts Flag Concentration Risk in Tech-Heavy Portfolios','Multiple Wall Street analysts warned about retail investor concentration in a small number of mega-cap tech stocks. Portfolios with over 70% tech exposure face elevated volatility risk.','5h ago','nt-neg','Relevant to you'],
+    ['📊','FT','S&P 500 Hits New High Amid Strong Earnings Season','The S&P 500 closed above 5,800 for the first time, driven by strong earnings from technology companies. Your equity allocation benefited from the rally.','6h ago','nt-pos','Positive for portfolio'],
+    ['💰','CNBC','Inflation Data Comes in Slightly Above Expectations','April CPI data showed a 3.2% annual increase, slightly above the 3.0% forecast. This may delay Fed rate cuts, keeping bond yields elevated.','8h ago','nt-neu','Affects bond yields'],
+    ['🌍','AP','Global Markets Rally on Trade Deal Optimism','Asian and European markets rallied overnight following news of a preliminary US-China trade framework. Emerging market exposure limited in your current portfolio.','10h ago','nt-pos','Low direct impact'],
+  ];
+  document.getElementById('page-news').innerHTML = `
+  <div class="fi" style="display:flex;align-items:center;justify-content:space-between">
+    <div style="font-size:13px;color:var(--text2)">News filtered to what matters for <strong style="color:var(--gold)">your portfolio</strong> — NVDA, AAPL, BND and macro signals.</div>
+    <button onclick="openDrawer('What does today\\'s news mean for my portfolio?')" style="font-size:12px;font-weight:600;color:var(--gold);background:var(--gold-dim);border:1px solid var(--gold-border);padding:6px 14px;border-radius:8px;cursor:none">Ask Verso to summarize →</button>
+  </div>
+  <div class="g2 fi">
+    <div class="card" style="grid-column:1/-1">
+      <div class="card-hd"><span class="card-title">Today's top stories</span><span style="font-size:11px;color:var(--text3)">Last updated 9:41 AM</span></div>
+      <div class="card-body" style="padding:4px 18px 14px">
+        ${newsItems.map(([ic,src,ti,de,tm,tg,rel])=>`
+        <div class="news-item" style="display:flex;gap:12px;padding:14px 0;border-bottom:1px solid var(--border)">
+          <div style="width:42px;height:42px;border-radius:10px;background:var(--surface);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">${ic}</div>
+          <div style="flex:1">
+            <div style="font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--text3);margin-bottom:4px">${src}</div>
+            <div style="font-size:13px;font-weight:500;color:var(--text);line-height:1.4;margin-bottom:4px">${ti}</div>
+            <div style="font-size:12px;color:var(--text3);line-height:1.55">${de}</div>
+            <div style="display:flex;align-items:center;gap:8px;margin-top:6px">
+              <span style="font-size:10px;color:var(--text4)">${tm}</span>
+              <span class="news-tag ${tg}" style="font-size:10px;font-weight:600;padding:2px 7px;border-radius:4px">${tg.includes('pos')?'Positive for portfolio':tg.includes('neg')?'Watch this':'Neutral'}</span>
+              <span style="font-size:10px;font-weight:500;color:var(--gold)">${rel}</span>
+            </div>
+          </div>
+          <button onclick="openDrawer('What does this news mean for my portfolio: ${ti}')" style="font-size:11px;font-weight:500;color:var(--text3);background:rgba(255,255,255,.04);border:1px solid var(--border);padding:5px 10px;border-radius:7px;cursor:none;white-space:nowrap;align-self:flex-start;transition:all .15s" onmouseover="this.style.color='var(--gold)';this.style.borderColor='var(--gold-border)'" onmouseout="this.style.color='var(--text3)';this.style.borderColor='var(--border)'">Ask Verso</button>
+        </div>`).join('')}
+      </div>
+    </div>
+  </div>`;
+}
+
+function renderScenarios() {
+  const scenarios = [
+    ['📉','Markets drop 20%','High impact','What happens to your portfolio if markets fall sharply?','What if markets drop 20%?'],
+    ['💼','Job loss for 6 months','Medium impact','How long can you sustain without income before touching investments?','What if I lose my job for 6 months?'],
+    ['💰','Increase contributions to $1,000/mo','Positive','How much faster do you hit your retirement target?','What if I increase contributions to $1,000/month?'],
+    ['🏠','Withdraw $10,000 next year','Medium impact','What\'s the least damaging way to make a large withdrawal?','What if I need to withdraw $10,000 next year?'],
+    ['📈','Markets rise 30%','Positive','How would a bull run affect your rebalancing needs?','What if markets rise 30%?'],
+    ['🧒','Add a dependent','High impact','How does adding a child or family member change your risk profile?','What if I add a dependent to my household?'],
+    ['🏡','Buy a house in 2 years instead of 4','High impact','What changes if your home purchase timeline accelerates?','What if I need to buy a house in 2 years instead of 4?'],
+    ['📊','Switch to aggressive portfolio','Medium impact','What would your returns look like with 85% equity?','What if I switched to an aggressive portfolio allocation?'],
+  ];
+  document.getElementById('page-scenarios').innerHTML = `
+  <div class="fi" style="padding:14px 18px;background:var(--navy3);border:1px solid var(--border);border-radius:14px;display:flex;align-items:center;gap:14px">
+    <div style="width:36px;height:36px;border-radius:10px;background:var(--gold-dim);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">🔭</div>
+    <div style="flex:1">
+      <div style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:3px">Run any scenario</div>
+      <div style="font-size:13px;color:var(--text2)">Ask Verso what would happen to <em>your specific portfolio</em> in any situation — market event, life change, or financial decision.</div>
+    </div>
+    <button onclick="openDrawer('Run a custom scenario for my portfolio')" style="font-size:13px;font-weight:600;background:var(--gold);color:var(--night);border:none;padding:9px 18px;border-radius:9px;cursor:none;white-space:nowrap">Custom scenario →</button>
+  </div>
+  <div class="g2 fi">
+    ${scenarios.map(([ic,name,impact,desc,q])=>`
+    <div class="scenario-card" onclick="openDrawer('${q}')">
+      <div class="sc-header">
+        <div class="sc-icon">${ic}</div>
+        <div><div class="sc-name">${name}</div><div class="sc-impact">${impact}</div></div>
+        <div style="margin-left:auto;font-size:11px;font-weight:600;color:var(--gold)">→</div>
+      </div>
+      <div class="sc-desc">${desc}</div>
+    </div>`).join('')}
+  </div>`;
+}
+
+function renderSettings() {
+  document.getElementById('page-settings').innerHTML = `
+  <div class="g2 fi">
+    <div>
+      <div class="card" style="margin-bottom:14px">
+        <div class="card-hd"><span class="card-title">Profile</span><button class="card-action" onclick="window.location.href='verso_agent.html'">Edit profile →</button></div>
+        <div class="card-body">
+          <div style="display:flex;align-items:center;gap:14px;margin-bottom:18px;padding-bottom:18px;border-bottom:1px solid var(--border)">
+            <div style="width:48px;height:48px;border-radius:50%;background:var(--gold);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:var(--night)">P</div>
+            <div><div style="font-size:15px;font-weight:600;color:var(--text)" id="settingsName">Priya K.</div><div style="font-size:12px;color:var(--gold);margin-top:2px" id="settingsType">Balanced Growth Investor</div></div>
+            <button style="margin-left:auto;font-size:12px;font-weight:600;color:var(--text2);background:rgba(255,255,255,.04);border:1px solid var(--border2);padding:6px 14px;border-radius:8px;cursor:none">Edit</button>
+          </div>
+          ${[['Age range','28–34'],['Household','Partner'],['Emergency fund','3–6 months'],['Monthly investable','$600–$900'],['Time horizon','10+ years'],['Risk type','Balanced Growth']].map(([k,v])=>`
+          <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)"><span style="font-size:12px;color:var(--text3)">${k}</span><span style="font-size:12px;font-weight:600;color:var(--text)">${v}</span></div>`).join('')}
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-hd"><span class="card-title">Brokerage connections</span></div>
+        <div class="card-body">
+          ${[['Robinhood','Not connected','Connect'],['Fidelity','Not connected','Connect'],['E*Trade','Not connected','Connect']].map(([b,s,a])=>`
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)">
+            <div><div style="font-size:13px;font-weight:500;color:var(--text)">${b}</div><div style="font-size:11px;color:var(--text3);margin-top:1px">${s}</div></div>
+            <button style="font-size:11px;font-weight:600;color:var(--gold);background:var(--gold-dim);border:1px solid var(--gold-border);padding:5px 12px;border-radius:7px;cursor:none">${a}</button>
+          </div>`).join('')}
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="card" style="margin-bottom:14px">
+        <div class="card-hd"><span class="card-title">Notifications</span></div>
+        <div class="card-body">
+          ${[['Portfolio alerts','Get notified when allocation drifts',true],['News digest','Daily news relevant to your holdings',true],['Weekly summary','Sunday portfolio recap email',false],['Rebalancing reminders','When Verso suggests action',true]].map(([k,s,on])=>`
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--border)">
+            <div><div style="font-size:13px;font-weight:500;color:var(--text)">${k}</div><div style="font-size:11px;color:var(--text3);margin-top:2px">${s}</div></div>
+            <button class="toggle ${on?'on':''}" onclick="this.classList.toggle('on')"></button>
+          </div>`).join('')}
+        </div>
+      </div>
+      <div class="card" style="margin-bottom:14px">
+        <div class="card-hd"><span class="card-title">Verso AI preferences</span></div>
+        <div class="card-body">
+          ${[['Explanation depth','Balanced — explain key decisions',false],['Jargon level','Plain English only',false],['Alert frequency','Weekly digest',false]].map(([k,v])=>`
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:11px 0;border-bottom:1px solid var(--border)">
+            <div><div style="font-size:13px;font-weight:500;color:var(--text)">${k}</div><div style="font-size:11px;color:var(--text3);margin-top:2px">${v}</div></div>
+            <button style="font-size:11px;font-weight:600;color:var(--text2);background:rgba(255,255,255,.04);border:1px solid var(--border2);padding:4px 10px;border-radius:6px;cursor:none">Change</button>
+          </div>`).join('')}
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-hd"><span class="card-title">Account</span></div>
+        <div class="card-body">
+          <button onclick="signOut()" style="width:100%;font-size:13px;font-weight:600;color:var(--red);background:var(--red-dim);border:1px solid rgba(248,113,113,.2);padding:11px;border-radius:10px;cursor:none;margin-bottom:8px">Sign out</button>
+          <button style="width:100%;font-size:13px;font-weight:500;color:var(--text3);background:rgba(255,255,255,.03);border:1px solid var(--border);padding:11px;border-radius:10px;cursor:none">Delete account</button>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+// ── AI DRAWER ──
+const AI_RESPONSES = {
+  'Why is tech high?':'NVDA and AAPL both had strong quarters, pushing tech to 74% of your equity — above your 60% target. Fine for your 10-year horizon. Redirect your next 2 monthly contributions to BND rather than selling. That rebalances without triggering a taxable event.',
+  'Why is my tech allocation high?':'NVDA and AAPL grew 18% this quarter, pushing tech to 74% of your equity. Fine for your 10yr horizon — redirect your next 2 contributions to BND to rebalance without selling anything.',
+  'Am I on track for retirement?':'At $700/month with 7% average return, you\'ll reach ~$620K by 2048 — below your $800K target. Increasing to $900/month closes that gap. The home purchase goal is on track at 42% funded with 4 years to go.',
+  'Am I on track for my home purchase goal?':'Your home goal is at 42% funded — $21K of a $50K down payment target. At your current rate you\'ll hit it by mid-2029, about 6 months ahead of your 4-year timeline. You\'re in good shape here.',
+  'Am I saving enough?':'At $700/month you\'re building solid momentum. For retirement you\'re slightly short of pace — $620K projected vs $800K target. Adding $200/month would put you right on track. For the home goal, you\'re ahead of schedule.',
+  'What if markets drop 20%?':'A 20% drop takes your portfolio from $24,680 to ~$19,740. Your bonds (28%) cushion the fall. Your house goal timeline means recovery is well within range. Recommendation: do nothing. If anything, add $200 this month to buy at lower prices.',
+  'When should I rebalance?':'Not yet. Your allocation is 65/28/7 — matching your target exactly. The tech concentration (74% of equity) is worth watching but your overall equity weight is right. I\'ll alert you when it drifts more than 5%. Natural rebalancing: ~6 weeks using regular contributions.',
+  'When to rebalance?':'No action needed yet. Your 65/28/7 allocation is on target. Redirect next 2 contributions to bonds to ease tech concentration gradually — no need to sell anything.',
+  'Should I increase contributions?':'Yes, if you can. Going from $700 to $900/month gets you to your $800K retirement target by 2048 instead of falling $180K short. Even $800/month makes a meaningful difference over 23 years. The math strongly favors increasing when income allows.',
+  'How should I rebalance my portfolio?':'Best approach: use new contributions to rebalance rather than selling. Over the next 6 weeks, direct your monthly $700 toward BND instead of your usual equity split. This eases the tech concentration without any taxable events. After 2 months, resume your normal allocation.',
+  'Explain my portfolio risk':'Your main risks: concentration risk (78% in 2 stocks) and sector risk (74% tech). These are manageable given your 10-year horizon — there\'s time to recover from volatility. The bond allocation (28%) provides a real cushion. Liquidity is excellent — all positions can be sold within 1 trading day.',
+  'What if I lose my job for 6 months?':'With 3–6 months emergency fund, you have real protection. You\'d pause contributions but shouldn\'t need to touch investments for ~3 months. If job loss extended further: draw from cash first, then bonds — never equity if avoidable. Your portfolio is well-positioned for this.',
+  'What if I increase contributions to $1,000/month?':'Increasing from $700 to $1,000/month adds ~$3,600/year to your retirement fund. Projected outcome: $820K by 2048 — right at your target. It also lets us rebalance faster using new money. If you can sustain it, this is the single highest-impact change you can make.',
+  'What if I need to withdraw $10,000 next year?':'Withdrawal plan: take from cash first ($1,700), then bonds ($6,900 available without disrupting equity). Total: $8,600 without touching stocks. The remaining $1,400 can come from trimming a small bond position. At your 23-year retirement horizon, this has minimal long-term impact.',
+  'What if markets rise 30%?':'A 30% rally takes your portfolio to ~$32K. The upside: your retirement projection improves. The challenge: your tech allocation would balloon even further above target. After a 30% rally I\'d suggest trimming NVDA slightly and rebalancing into bonds — but only if gains are in a tax-advantaged account.',
+  'What if I add a dependent to my household?':'Adding a dependent typically reduces your risk capacity — more financial obligations, higher emergency fund needs, and potentially less disposable income. We\'d want to: increase your emergency fund target to 6+ months, slightly reduce equity allocation, and review your life insurance coverage. Update your profile and I\'ll recalculate everything.',
+  'What if I need to buy a house in 2 years instead of 4?':'This changes things significantly. With 2 years instead of 4, your home down payment fund needs to be much more conservative — we should move it out of equity into bonds or even CDs. That means redirecting $300–400/month from equity to safer instruments immediately. Let\'s update your profile to reflect this.',
+  'What if I switched to an aggressive portfolio allocation?':'Switching to 85% equity increases your projected retirement figure to ~$780K — closer to target — but with significantly more volatility. A 20% market correction would hit harder (~$17K drop vs $19.7K currently). Given your solid emergency fund and stable income, you could handle aggressive allocation — but I\'d only recommend it if your horizon is truly 10+ years.',
+};
+
+let drawerOpen = false;
+function openDrawer(msg) {
+  const drawer = document.getElementById('aiDrawer');
+  drawer.classList.add('open');
+  drawerOpen = true;
+  if (msg) {
+    setTimeout(() => {
+      addDMsg(msg, 'hu');
+      showTyping();
+      setTimeout(() => {
+        removeTyping();
+        const resp = AI_RESPONSES[msg] || 'Let me analyze your portfolio for that. Based on your Balanced Growth profile and current allocation — ' + msg.toLowerCase() + ' — here\'s what I see for your specific situation…';
+        addDMsg(resp, 'ai');
+      }, 900);
+    }, 100);
+  }
+}
+function closeDrawer() {
+  document.getElementById('aiDrawer').classList.remove('open');
+  drawerOpen = false;
+}
+function addDMsg(text, role) {
+  const msgs = document.getElementById('drawerMsgs');
+  const wrap = document.createElement('div');
+  wrap.className = `d-msg ${role==='hu'?'user':''}`;
+  const av = document.createElement('div');
+  av.className = `d-av ${role}`;
+  av.textContent = role==='ai'?'V':'P';
+  const bubble = document.createElement('div');
+  bubble.className = `d-bubble ${role}`;
+  bubble.textContent = text;
+  wrap.appendChild(av); wrap.appendChild(bubble);
+  msgs.appendChild(wrap);
+  msgs.scrollTop = msgs.scrollHeight;
+}
+function showTyping() {
+  const msgs = document.getElementById('drawerMsgs');
+  const wrap = document.createElement('div');
+  wrap.className = 'd-msg'; wrap.id = 'typing';
+  const av = document.createElement('div');
+  av.className = 'd-av ai'; av.textContent = 'V';
+  const b = document.createElement('div');
+  b.className = 'typing-bubble';
+  b.innerHTML = '<div class="t-dot"></div><div class="t-dot"></div><div class="t-dot"></div>';
+  wrap.appendChild(av); wrap.appendChild(b);
+  msgs.appendChild(wrap);
+  msgs.scrollTop = msgs.scrollHeight;
+}
+function removeTyping() { document.getElementById('typing')?.remove(); }
+function sendQ(q) { openDrawer(q); }
+function sendDrawerMsg() {
+  const inp = document.getElementById('dInp');
+  const val = inp.value.trim();
+  if (!val) return;
+  inp.value = ''; inp.style.height = 'auto';
+  openDrawer(val);
+}
+document.getElementById('dInp').addEventListener('keydown', e => {
+  if (e.key==='Enter'&&!e.shiftKey) { e.preventDefault(); sendDrawerMsg(); }
+});
+document.getElementById('dInp').addEventListener('input', function() {
+  this.style.height = 'auto';
+  this.style.height = Math.min(this.scrollHeight, 100) + 'px';
+});
+
+// ── SIGN IN MODAL ──
+function openModal() { document.getElementById('signinModal').classList.add('open'); }
+function closeModal() { document.getElementById('signinModal').classList.remove('open'); }
+function closeModalOutside(e) { if(e.target===document.getElementById('signinModal')) closeModal(); }
+document.addEventListener('keydown', e => { if(e.key==='Escape') { closeModal(); closeDrawer(); }});
+
+function handleSignIn() {
+  const email = document.getElementById('modalEmail').value.trim().toLowerCase();
+  const pw = document.getElementById('modalPw').value;
+  const err = document.getElementById('modalError');
+  err.classList.remove('show');
+  if (!email) { err.textContent='Please enter your email.'; err.classList.add('show'); return; }
+  if (ACCOUNTS[email] !== undefined) {
+    if (ACCOUNTS[email] === pw || pw === '') {
+      // existing user → stay on dashboard
+      closeModal();
+      document.getElementById('sbUserName').textContent = 'Priya K.';
+      document.getElementById('tbUserName').textContent = 'Priya K.';
+    } else {
+      err.textContent = 'Incorrect password. Try again.'; err.classList.add('show');
+    }
+  } else {
+    // new user → go to onboarding
+    window.location.href = 'verso_agent.html';
+  }
+}
+
+// ── SIGN OUT ──
+function signOut() { window.location.href = 'verso_v5.html'; }
+
+// ── CURSOR ──
+const cur = document.getElementById('cur'), ring = document.getElementById('cur-ring');
+let mx=0,my=0,rx=0,ry=0;
+document.addEventListener('mousemove', e => { mx=e.clientX; my=e.clientY; cur.style.left=mx+'px'; cur.style.top=my+'px'; });
+(function loop(){ rx+=(mx-rx)*.1; ry+=(my-ry)*.1; ring.style.left=rx+'px'; ring.style.top=ry+'px'; requestAnimationFrame(loop); })();
+
+// ── BOOT ──
+renderDashboard();
+renderPortfolio();
+renderGoals();
+renderNews();
+renderScenarios();
+renderSettings();
+// Hide all first, then show dashboard
+pages.forEach(p => {
+  const el = document.getElementById('page-'+p);
+  if(el) el.style.display = 'none';
+});
+showPage('dashboard');
+</script>
+</body>
+</html>

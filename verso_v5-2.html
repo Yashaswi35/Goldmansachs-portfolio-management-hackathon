@@ -1,0 +1,1038 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Verso — Investing made human</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300;1,9..144,400&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --night:#080d1a;
+  --navy:#0d1428;
+  --navy2:#111c35;
+  --navy3:#162040;
+  --surface:#1b274a;
+  --surface2:#1f2e54;
+  --blue-light:#e8eeff;
+  --blue-pale:#f0f4ff;
+  --accent:#4f7fff;
+  --accent-glow:rgba(79,127,255,.18);
+  --accent-pale:rgba(79,127,255,.08);
+  --gold:#e8b84b;
+  --gold-pale:rgba(232,184,75,.1);
+  --gold-glow:rgba(232,184,75,.2);
+  --text:#eef1ff;
+  --text2:rgba(238,241,255,.58);
+  --text3:rgba(238,241,255,.32);
+  --text4:rgba(238,241,255,.16);
+  --border:rgba(255,255,255,.07);
+  --border2:rgba(255,255,255,.12);
+  --green:#3ecf8e;
+  --red:#f87171;
+  --sans:'Geist',system-ui,sans-serif;
+  --serif:'Fraunces',Georgia,serif;
+  --r:14px;
+  --r-lg:20px;
+  --r-sm:8px;
+}
+html{scroll-behavior:smooth}
+body{
+  background:var(--night);color:var(--text);
+  font-family:var(--sans);font-weight:400;
+  overflow-x:hidden;cursor:none;
+  -webkit-font-smoothing:antialiased;
+}
+
+/* ── CURSOR ── */
+#cur{
+  position:fixed;width:10px;height:10px;
+  background:var(--gold);border-radius:50%;
+  pointer-events:none;z-index:9999;
+  transform:translate(-50%,-50%);
+  transition:width .18s,height .18s,border-radius .18s,opacity .18s;
+  mix-blend-mode:normal;
+}
+#cur-ring{
+  position:fixed;width:38px;height:38px;
+  border:1.5px solid rgba(232,184,75,.3);
+  border-radius:50%;pointer-events:none;z-index:9998;
+  transform:translate(-50%,-50%);
+}
+body:has(a:hover) #cur,body:has(button:hover) #cur{
+  width:48px;height:48px;border-radius:10px;opacity:.12;
+  background:var(--gold);
+}
+
+/* ── NAV ── */
+nav{
+  position:sticky;top:0;z-index:200;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 48px;height:62px;
+  background:rgba(8,13,26,.82);
+  backdrop-filter:blur(20px);
+  border-bottom:1px solid var(--border);
+}
+.logo{display:flex;align-items:center;gap:10px;text-decoration:none}
+.logo-mark{
+  width:30px;height:30px;border-radius:9px;
+  background:var(--gold);
+  display:flex;align-items:center;justify-content:center;
+}
+.logo-mark svg{width:15px;height:15px;stroke:var(--night);fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
+.logo-name{font-size:16px;font-weight:700;color:var(--text);letter-spacing:-.3px}
+.nav-links{display:flex;gap:2px}
+.nav-a{
+  font-size:13.5px;font-weight:400;color:var(--text2);
+  text-decoration:none;padding:6px 14px;border-radius:8px;
+  transition:color .15s,background .15s;
+}
+.nav-a:hover{color:var(--text);background:rgba(255,255,255,.05)}
+.nav-r{display:flex;gap:8px;align-items:center}
+.btn-nav-ghost{
+  font-size:13.5px;font-weight:500;color:var(--text2);
+  background:transparent;border:1px solid var(--border2);
+  padding:7px 16px;border-radius:8px;cursor:none;
+  transition:all .15s;text-decoration:none;display:inline-block;
+}
+.btn-nav-ghost:hover{color:var(--text);border-color:rgba(255,255,255,.25);background:rgba(255,255,255,.05)}
+.btn-nav-gold{
+  font-size:13.5px;font-weight:600;
+  background:var(--gold);color:var(--night);
+  border:none;padding:8px 18px;border-radius:8px;cursor:none;
+  transition:transform .1s,opacity .15s;
+  text-decoration:none;display:inline-block;
+  box-shadow:0 2px 16px var(--gold-glow);
+}
+.btn-nav-gold:hover{opacity:.88;transform:translateY(-1px)}
+
+/* ── HERO ── */
+.hero{
+  padding:100px 48px 0;
+  text-align:left;position:relative;overflow:hidden;
+  background:var(--night);
+}
+/* radial glows */
+.hero::before{
+  content:'';position:absolute;
+  width:900px;height:600px;
+  background:radial-gradient(ellipse,rgba(79,127,255,.13) 0%,transparent 65%);
+  top:-100px;left:50%;transform:translateX(-50%);pointer-events:none;
+}
+.hero::after{
+  content:'';position:absolute;
+  width:500px;height:400px;
+  background:radial-gradient(ellipse,rgba(232,184,75,.08) 0%,transparent 60%);
+  top:300px;left:50%;transform:translateX(-50%);pointer-events:none;
+}
+.hero-inner{position:relative;z-index:2}
+
+.hero-pill{
+  display:inline-flex;align-items:center;gap:7px;
+  border:1px solid rgba(232,184,75,.3);
+  background:rgba(232,184,75,.07);
+  color:var(--gold);font-size:12px;font-weight:600;
+  padding:6px 14px;border-radius:20px;margin-bottom:32px;
+  opacity:0;animation:pop .6s .1s cubic-bezier(.34,1.56,.64,1) forwards;
+  letter-spacing:.02em;
+}
+.pill-dot{width:6px;height:6px;border-radius:50%;background:var(--gold);animation:blink 2s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+
+h1{
+  font-size:clamp(48px,7.5vw,92px);
+  font-weight:700;line-height:1.0;letter-spacing:-2.5px;
+  color:var(--text);max-width:700px;margin:0 0 24px;
+}
+h1 em{
+  font-family:var(--serif);font-weight:300;font-style:italic;
+  color:var(--gold);letter-spacing:-1px;
+}
+.hl{overflow:hidden;display:block}
+.hl span{
+  display:block;opacity:0;transform:translateY(110%);
+  animation:su .85s cubic-bezier(.16,1,.3,1) forwards;
+}
+.hl:nth-child(1) span{animation-delay:.2s}
+.hl:nth-child(2) span{animation-delay:.36s}
+.hl:nth-child(3) span{animation-delay:.52s}
+
+.hero-sub{
+  font-size:18px;font-weight:400;color:var(--text2);
+  max-width:480px;margin:0 0 36px;line-height:1.75;
+  opacity:0;animation:fu .7s .75s forwards;
+}
+.hero-btns{
+  display:flex;gap:12px;flex-wrap:wrap;
+  margin-bottom:14px;
+  opacity:0;animation:fu .7s .9s forwards;
+}
+.btn-gold{
+  font-size:15px;font-weight:700;
+  background:var(--gold);color:var(--night);
+  border:none;padding:14px 32px;border-radius:10px;cursor:none;
+  box-shadow:0 4px 24px var(--gold-glow);
+  transition:transform .12s,box-shadow .15s,opacity .15s;
+  text-decoration:none;display:inline-block;
+}
+.btn-gold:hover{transform:translateY(-2px);box-shadow:0 8px 32px rgba(232,184,75,.35);opacity:.95}
+.btn-outline{
+  font-size:15px;font-weight:500;color:var(--text);
+  background:rgba(255,255,255,.05);
+  border:1px solid var(--border2);
+  padding:13px 28px;border-radius:10px;cursor:none;
+  transition:background .15s,border-color .15s;
+  text-decoration:none;display:inline-block;
+}
+.btn-outline:hover{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.2)}
+.hero-caption{font-size:12px;color:var(--text3);opacity:0;animation:fu .7s 1.05s forwards;margin-bottom:72px}
+
+/* ── SPLIT HERO LAYOUT ── */
+.hero-split{
+  display:grid;grid-template-columns:1fr 1fr;gap:32px;
+  max-width:860px;width:100%;align-items:end;
+  opacity:0;animation:fu .9s 1.2s forwards;
+}
+.phone-wrap{display:flex;justify-content:center;align-items:flex-end}
+.phone{
+  width:210px;background:var(--navy2);
+  border:1.5px solid var(--border2);border-radius:36px;overflow:hidden;
+  box-shadow:0 32px 64px rgba(0,0,0,.55),0 0 0 1px rgba(255,255,255,.06);
+}
+.phone-notch{width:72px;height:20px;background:var(--night);border-radius:0 0 12px 12px;margin:0 auto 14px}
+.phone-inner{padding:0 12px 22px}
+.ph-greeting{font-size:11px;font-weight:600;color:var(--text);margin-bottom:10px}
+.ph-greeting span{color:var(--text3);font-weight:400;font-size:10px}
+.ph-card{background:var(--navy3);border:1px solid var(--border);border-radius:14px;padding:12px;margin-bottom:8px}
+.ph-card-lbl{font-size:9px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;color:var(--text3);margin-bottom:3px}
+.ph-card-val{font-size:20px;font-weight:700;color:var(--text);letter-spacing:-.5px;line-height:1}
+.ph-card-sub{font-size:10px;font-weight:600;color:var(--green);margin-top:4px}
+.ph-mini-stats{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px}
+.ph-ms{background:var(--navy3);border:1px solid var(--border);border-radius:10px;padding:8px}
+.ph-ms-l{font-size:8px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:2px}
+.ph-ms-v{font-size:13px;font-weight:700;color:var(--text)}
+.ph-ms-s{font-size:9px;font-weight:600}
+.ph-alloc-label{font-size:9px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;color:var(--text3);margin-bottom:6px}
+.ph-alloc{display:flex;flex-direction:column;gap:5px}
+.ph-al{display:flex;flex-direction:column;gap:2px}
+.ph-al-meta{display:flex;justify-content:space-between}
+.ph-al-name{font-size:9px;color:var(--text2)}
+.ph-al-pct{font-size:9px;font-weight:600;color:var(--text)}
+.ph-bar{height:3px;background:rgba(255,255,255,.07);border-radius:2px;overflow:hidden}
+.ph-fill{height:100%;border-radius:2px}
+.pf-g{background:var(--gold)}.pf-b{background:var(--accent)}.pf-gr{background:var(--green)}
+.ph-alert{margin-top:10px;padding:8px 10px;border-left:2px solid var(--gold);background:rgba(232,184,75,.04);border-radius:0 8px 8px 0}
+.ph-alert-t{font-size:9px;font-weight:700;color:var(--gold);margin-bottom:2px}
+.ph-alert-d{font-size:9px;color:var(--text2);line-height:1.5}
+
+/* ── CHAT PANEL ── */
+.chat-panel{
+  background:var(--navy);border:1px solid var(--border2);border-radius:20px;
+  overflow:hidden;display:flex;flex-direction:column;
+  box-shadow:0 16px 48px rgba(0,0,0,.4),0 0 0 1px rgba(255,255,255,.04);
+}
+.cp-top{
+  padding:12px 16px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+  background:rgba(255,255,255,.02);
+}
+.cp-title{display:flex;align-items:center;gap:8px}
+.cp-av{width:24px;height:24px;border-radius:50%;background:var(--gold);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--night)}
+.cp-name{font-size:13px;font-weight:600;color:var(--text)}
+.cp-live{display:flex;align-items:center;gap:4px;font-size:10px;font-weight:500;color:var(--green)}
+.cp-live-dot{width:5px;height:5px;border-radius:50%;background:var(--green);animation:blink 2s infinite}
+.cp-msgs{padding:14px;display:flex;flex-direction:column;gap:10px}
+.cm{display:flex;gap:7px;align-items:flex-start}
+.cm.u{flex-direction:row-reverse}
+.av{width:24px;height:24px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700}
+.av-v{background:var(--gold);color:var(--night)}
+.av-u{background:var(--surface2);color:var(--text2)}
+.cb{max-width:86%;font-size:12.5px;line-height:1.6;padding:9px 12px;border-radius:10px}
+.cb-v{background:var(--surface);border:1px solid var(--border2);color:var(--text);border-radius:4px 10px 10px 10px}
+.cb-u{background:var(--navy3);border:1px solid var(--border);color:var(--text);border-radius:10px 4px 10px 10px}
+.cb-lbl{font-size:10px;font-weight:700;color:var(--gold);margin-bottom:3px;letter-spacing:.06em;text-transform:uppercase}
+.chips{display:flex;gap:5px;flex-wrap:wrap;margin-top:7px}
+.chip{font-size:10px;font-weight:500;padding:2px 7px;border-radius:5px;color:var(--text2);border:1px solid var(--border)}
+.cp-input-row{
+  padding:10px 12px;border-top:1px solid var(--border);
+  display:flex;gap:7px;align-items:center;
+}
+.cp-input{
+  flex:1;background:rgba(255,255,255,.04);border:1px solid var(--border);
+  border-radius:7px;padding:7px 10px;font-size:12px;color:var(--text2);
+  font-family:var(--sans);outline:none;
+}
+.cp-send{
+  width:28px;height:28px;border-radius:7px;background:var(--gold);
+  border:none;cursor:none;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+}
+.cp-send svg{width:12px;height:12px;stroke:var(--night);fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
+.up{color:var(--green)}.dn{color:var(--red)}.muted{color:var(--text3)}
+
+/* old pw-wrap stub so nothing breaks */
+.pw-wrap{display:none}
+.pw-glow,.pw,.pw-bar,.pw-dots,.pw-d,.d1,.d2,.d3,.pw-url,.pw-live,.live-d,.pw-body,.pw-side,.side-sec,.si,.si-n,.pw-main,.pw-hey,.pw-hey-t,.pw-hey-s,.pw-av,.pw-stats,.ps,.ps-l,.ps-v,.ps-s,.chat-lbl,.chat,.cg,.ca,.cb2{}
+.pw-glow{
+  position:absolute;bottom:-60px;left:50%;transform:translateX(-50%);
+  width:80%;height:60px;
+  background:radial-gradient(ellipse,rgba(79,127,255,.2) 0%,transparent 70%);
+  pointer-events:none;
+}
+.pw{
+  background:var(--navy);
+  border:1px solid var(--border2);
+  border-radius:18px 18px 0 0;
+  overflow:hidden;
+  box-shadow:0 0 0 1px rgba(255,255,255,.04),0 -4px 80px rgba(0,0,0,.6),0 -1px 40px rgba(79,127,255,.08);
+}
+.pw-bar{
+  display:flex;align-items:center;gap:8px;
+  padding:13px 18px;
+  background:rgba(255,255,255,.03);
+  border-bottom:1px solid var(--border);
+}
+.pw-dots{display:flex;gap:6px}
+.pw-d{width:11px;height:11px;border-radius:50%}
+.d1{background:rgba(255,95,87,.7)}.d2{background:rgba(255,189,68,.7)}.d3{background:rgba(40,201,64,.7)}
+.pw-url{
+  flex:1;text-align:center;max-width:300px;margin:0 auto;
+  background:rgba(255,255,255,.05);border:1px solid var(--border);
+  border-radius:6px;padding:4px 14px;
+  font-size:12px;color:var(--text3);
+}
+.pw-live{
+  display:flex;align-items:center;gap:5px;
+  font-size:11px;font-weight:600;color:var(--green);
+  background:rgba(62,207,142,.08);border:1px solid rgba(62,207,142,.2);
+  padding:3px 10px;border-radius:10px;
+}
+.live-d{width:5px;height:5px;border-radius:50%;background:var(--green);animation:blink 2s infinite}
+
+.pw-body{display:grid;grid-template-columns:196px 1fr;min-height:360px}
+
+/* sidebar */
+.pw-side{border-right:1px solid var(--border);padding:14px 0;background:rgba(0,0,0,.15)}
+.side-sec{
+  font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--text4);padding:0 14px;margin:16px 0 5px;
+}
+.side-sec:first-child{margin-top:0}
+.si{
+  display:flex;align-items:center;gap:9px;
+  padding:7px 10px;margin:0 6px;border-radius:8px;
+  font-size:13px;font-weight:500;color:var(--text2);
+  cursor:pointer;transition:all .15s;
+}
+.si:hover{background:rgba(255,255,255,.05);color:var(--text)}
+.si.on{background:rgba(232,184,75,.1);color:var(--gold)}
+.si svg{width:14px;height:14px;opacity:.5;flex-shrink:0}
+.si.on svg{opacity:1;stroke:var(--gold)}
+.si-n{
+  margin-left:auto;font-size:10px;font-weight:700;
+  background:var(--gold);color:var(--night);
+  padding:1px 6px;border-radius:6px;
+}
+
+/* main */
+.pw-main{padding:20px;background:transparent}
+.pw-hey{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px}
+.pw-hey-t{font-size:14px;font-weight:600;color:var(--text)}
+.pw-hey-s{font-size:12px;color:var(--text3);margin-top:3px}
+.pw-av{
+  width:34px;height:34px;border-radius:50%;
+  background:rgba(232,184,75,.15);border:1.5px solid rgba(232,184,75,.3);
+  display:flex;align-items:center;justify-content:center;
+  font-size:13px;font-weight:700;color:var(--gold);flex-shrink:0;
+}
+
+.pw-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px}
+.ps{
+  background:rgba(255,255,255,.04);border:1px solid var(--border);
+  border-radius:10px;padding:11px 12px;
+}
+.ps-l{font-size:10px;font-weight:500;color:var(--text3);margin-bottom:5px;text-transform:uppercase;letter-spacing:.06em}
+.ps-v{font-size:16px;font-weight:700;color:var(--text);line-height:1}
+.ps-s{font-size:11px;font-weight:600;margin-top:3px}
+.up{color:var(--green)}.dn{color:var(--red)}.muted{color:var(--text3)}
+
+.chat-lbl{font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--text4);margin-bottom:10px}
+.chat{display:flex;flex-direction:column;gap:9px}
+.cm{display:flex;gap:8px;align-items:flex-start}
+.cm.u{flex-direction:row-reverse}
+.av{width:26px;height:26px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700}
+.av-v{background:var(--gold);color:var(--night)}
+.av-u{background:var(--surface2);color:var(--text2)}
+.cb{max-width:82%;font-size:12.5px;line-height:1.6;padding:9px 13px;border-radius:10px}
+.cb-v{background:var(--surface);border:1px solid var(--border2);color:var(--text);border-radius:4px 10px 10px 10px}
+.cb-u{background:rgba(232,184,75,.1);border:1px solid rgba(232,184,75,.2);color:var(--text);border-radius:10px 4px 10px 10px}
+.cb-lbl{font-size:10px;font-weight:700;color:var(--gold);margin-bottom:3px;letter-spacing:.06em;text-transform:uppercase}
+.chips{display:flex;gap:5px;flex-wrap:wrap;margin-top:7px}
+.chip{font-size:10px;font-weight:600;padding:3px 8px;border-radius:6px}
+.cg{background:rgba(62,207,142,.12);color:var(--green);border:1px solid rgba(62,207,142,.2)}
+.ca{background:rgba(232,184,75,.1);color:var(--gold);border:1px solid rgba(232,184,75,.2)}
+.cb2{background:rgba(79,127,255,.12);color:var(--accent);border:1px solid rgba(79,127,255,.25)}
+
+/* ── LOGOS ── */
+.logos{
+  padding:22px 48px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:center;
+  gap:8px;flex-wrap:wrap;
+  background:var(--navy);
+}
+.logos-lbl{font-size:12px;font-weight:500;color:var(--text3);margin-right:6px}
+.broker{
+  font-size:12px;font-weight:600;color:var(--text3);
+  background:rgba(255,255,255,.04);border:1px solid var(--border);
+  padding:5px 14px;border-radius:20px;
+  transition:border-color .15s,color .15s;
+}
+.broker:hover{border-color:var(--border2);color:var(--text2)}
+
+/* ── STATS STRIP ── */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);border-bottom:1px solid var(--border);background:var(--navy)}
+.stat{padding:44px 40px;border-right:1px solid var(--border);text-align:center}
+.stat:last-child{border-right:none}
+.stat-n{
+  font-size:52px;font-weight:700;color:var(--gold);
+  line-height:1;margin-bottom:8px;letter-spacing:-2px;
+}
+.stat-l{font-size:14px;color:var(--text2);line-height:1.5;font-weight:400}
+
+/* ── SECTIONS ── */
+.sec{padding:96px 48px;border-bottom:1px solid var(--border);background:var(--navy)}
+.sec.alt{background:var(--night)}
+.sec-tag{
+  display:inline-flex;align-items:center;gap:6px;
+  font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--gold);margin-bottom:16px;
+}
+.sec-tag::before{content:'';width:16px;height:1px;background:var(--gold)}
+.sec-h{
+  font-size:clamp(32px,4.5vw,54px);
+  font-weight:700;letter-spacing:-1.5px;line-height:1.1;
+  color:var(--text);margin-bottom:14px;
+}
+.sec-h em{font-family:var(--serif);font-weight:300;font-style:italic;color:var(--gold);letter-spacing:-.5px}
+.sec-sub{font-size:16px;color:var(--text2);max-width:460px;line-height:1.75;margin-bottom:56px;font-weight:400}
+
+/* ── PROBLEMS ── */
+.probs{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px}
+.prob{
+  background:var(--night);border:1px solid var(--border);
+  border-radius:var(--r-lg);padding:28px 22px;
+  transition:border-color .2s,transform .2s;
+}
+.prob:hover{border-color:var(--border2);transform:translateY(-3px)}
+.prob-ico{
+  width:42px;height:42px;border-radius:12px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:20px;margin-bottom:16px;
+}
+.pi1{background:rgba(248,113,113,.1)}
+.pi2{background:rgba(232,184,75,.1)}
+.pi3{background:rgba(79,127,255,.12)}
+.pi4{background:rgba(167,139,250,.1)}
+.prob-who{font-size:10px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--text3);margin-bottom:8px}
+.prob-title{font-size:16px;font-weight:600;color:var(--text);margin-bottom:8px;letter-spacing:-.3px}
+.prob-desc{font-size:13px;color:var(--text2);line-height:1.65}
+.prob-tag{
+  display:inline-block;margin-top:14px;
+  font-size:11px;font-weight:600;padding:4px 10px;border-radius:7px;
+}
+.pt-r{background:rgba(248,113,113,.1);color:var(--red)}
+.pt-a{background:rgba(232,184,75,.1);color:var(--gold)}
+
+/* ── HOW IT WORKS — CLEAN TIMELINE ── */
+.how-wrap{position:relative;max-width:680px}
+.how-line{
+  position:absolute;left:11px;top:8px;bottom:8px;
+  width:1px;background:var(--border2);
+}
+.how-steps{display:flex;flex-direction:column;gap:0;padding-left:44px;position:relative}
+.how-step{
+  padding:36px 0;
+  border-bottom:1px solid var(--border);
+  position:relative;
+}
+.how-step:last-child{border-bottom:none;padding-bottom:0}
+.how-node{
+  position:absolute;left:-38px;top:42px;
+  width:10px;height:10px;border-radius:50%;
+  background:var(--navy2);
+  border:1.5px solid var(--border2);
+}
+.how-node.active-node{
+  background:var(--text3);
+  border-color:var(--text2);
+}
+.how-step-num{
+  font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--text3);margin-bottom:10px;
+}
+.how-step-title{
+  font-size:24px;font-weight:700;color:var(--text);
+  margin-bottom:12px;letter-spacing:-.5px;line-height:1.2;
+}
+.how-step-desc{
+  font-size:15px;color:var(--text2);
+  line-height:1.8;max-width:520px;font-weight:400;
+}
+.how-detail{
+  display:flex;gap:6px;flex-wrap:wrap;margin-top:16px;
+}
+.how-chip{
+  font-size:12px;font-weight:400;
+  color:var(--text3);
+  padding:0;
+}
+.how-chip::before{content:'— '}
+.how-chip-sep{display:none}
+
+/* ── FEATURES ── */
+.feat-split{display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:start}
+.feat-list{display:flex;flex-direction:column;gap:0;margin-top:8px}
+.fi{
+  display:flex;gap:14px;padding:22px 0;
+  border-bottom:1px solid var(--border);align-items:flex-start;
+}
+.fi:first-child{padding-top:0}
+.fi:last-child{border-bottom:none}
+.fi-dot{
+  width:22px;height:22px;border-radius:7px;
+  background:rgba(232,184,75,.1);border:1px solid rgba(232,184,75,.2);
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;
+}
+.fi-dot svg{width:11px;height:11px;stroke:var(--gold);fill:none;stroke-width:2.5}
+.fi-title{font-size:15px;font-weight:600;color:var(--text);margin-bottom:4px;letter-spacing:-.2px}
+.fi-desc{font-size:13px;color:var(--text2);line-height:1.65;font-weight:400}
+
+/* profile card */
+.profile-card{
+  background:var(--navy2);border:1px solid var(--border2);
+  border-radius:20px;overflow:hidden;
+  box-shadow:0 0 40px rgba(0,0,0,.4);
+}
+.pc-top{
+  padding:18px 20px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:12px;
+  background:rgba(232,184,75,.04);
+}
+.pc-av{
+  width:40px;height:40px;border-radius:50%;
+  background:rgba(232,184,75,.12);border:2px solid rgba(232,184,75,.3);
+  display:flex;align-items:center;justify-content:center;
+  font-size:16px;font-weight:700;color:var(--gold);
+}
+.pc-n{font-size:14px;font-weight:600;color:var(--text)}
+.pc-type{font-size:12px;color:var(--gold);margin-top:2px;font-weight:500}
+.pc-badge{
+  margin-left:auto;font-size:11px;font-weight:600;
+  background:rgba(62,207,142,.1);border:1px solid rgba(62,207,142,.25);
+  color:var(--green);padding:4px 10px;border-radius:10px;
+}
+.pc-sec{padding:16px 20px;border-bottom:1px solid var(--border)}
+.pc-sec:last-child{border-bottom:none}
+.pc-sec-lbl{font-size:10px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;color:var(--text3);margin-bottom:10px}
+.pc-row{display:flex;justify-content:space-between;padding:5px 0;align-items:center}
+.pc-k{font-size:12.5px;color:var(--text2)}
+.pc-v{font-size:12.5px;font-weight:600;color:var(--text)}
+.pc-v.ok{color:var(--green)}.pc-v.warn{color:var(--gold)}
+.alloc{display:flex;flex-direction:column;gap:10px}
+.al{display:flex;flex-direction:column;gap:4px}
+.al-meta{display:flex;justify-content:space-between}
+.al-name{font-size:12px;color:var(--text2)}
+.al-pct{font-size:12px;font-weight:600;color:var(--text)}
+.al-bar{height:5px;background:rgba(255,255,255,.06);border-radius:3px;overflow:hidden}
+.al-fill{height:100%;border-radius:3px}
+.fg{background:var(--gold)}.fb{background:var(--accent)}.fgr{background:var(--green)}
+.pc-note{
+  margin:0 20px 18px;padding:12px 14px;
+  background:rgba(232,184,75,.06);border:1px solid rgba(232,184,75,.15);
+  border-radius:10px;font-size:12.5px;color:var(--text2);line-height:1.65;
+}
+.pc-note strong{color:var(--gold);font-weight:600}
+
+/* ── CTA ── */
+.cta-section{
+  padding:120px 48px;text-align:center;
+  background:var(--night);border-bottom:1px solid var(--border);
+  position:relative;overflow:hidden;
+}
+.cta-glow{
+  position:absolute;inset:0;
+  background:radial-gradient(ellipse at 50% 50%,rgba(232,184,75,.09) 0%,transparent 60%);
+  pointer-events:none;
+}
+.cta-inner{position:relative;z-index:2}
+.cta-tag{
+  font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--gold);margin-bottom:16px;display:flex;align-items:center;justify-content:center;gap:8px;
+}
+.cta-tag::before,.cta-tag::after{content:'';width:32px;height:1px;background:rgba(232,184,75,.3)}
+.cta-h{
+  font-size:clamp(40px,6vw,72px);font-weight:700;
+  letter-spacing:-2px;line-height:1.05;color:var(--text);margin-bottom:18px;
+}
+.cta-h em{font-family:var(--serif);font-weight:300;font-style:italic;color:var(--gold)}
+.cta-sub{font-size:16px;color:var(--text2);max-width:400px;margin:0 auto 44px;line-height:1.75}
+.cta-btns{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+.cta-legal{margin-top:20px;font-size:11px;color:var(--text3)}
+
+/* ── FOOTER ── */
+footer{
+  padding:32px 48px;
+  display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:14px;
+  background:var(--navy);border-top:1px solid var(--border);
+}
+.f-logo{display:flex;align-items:center;gap:9px;text-decoration:none}
+.f-mark{width:28px;height:28px;border-radius:8px;background:var(--gold);display:flex;align-items:center;justify-content:center}
+.f-mark svg{width:13px;height:13px;stroke:var(--night);fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
+.f-name{font-size:15px;font-weight:700;color:var(--text)}
+.f-links{display:flex;gap:24px;list-style:none}
+.f-links a{font-size:12px;color:var(--text3);text-decoration:none;transition:color .15s}
+.f-links a:hover{color:var(--text2)}
+.f-copy{font-size:12px;color:var(--text4)}
+
+/* ── SIGN IN MODAL ── */
+.modal-overlay{
+  position:fixed;inset:0;background:rgba(8,13,26,.85);
+  backdrop-filter:blur(10px);z-index:500;
+  display:none;align-items:center;justify-content:center;
+}
+.modal-overlay.open{display:flex}
+.modal{
+  background:var(--navy2);border:1px solid var(--border2);
+  border-radius:20px;padding:40px 36px;width:100%;max-width:400px;
+  position:relative;
+  box-shadow:0 24px 64px rgba(0,0,0,.6);
+  animation:modalIn .25s cubic-bezier(.16,1,.3,1);
+}
+@keyframes modalIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+.modal-close{
+  position:absolute;top:16px;right:16px;
+  width:28px;height:28px;border-radius:8px;
+  background:rgba(255,255,255,.06);border:none;cursor:none;
+  display:flex;align-items:center;justify-content:center;
+  color:var(--text3);font-size:15px;transition:background .15s,color .15s;
+}
+.modal-close:hover{background:rgba(255,255,255,.1);color:var(--text)}
+.modal-logo{display:flex;align-items:center;gap:8px;margin-bottom:24px}
+.modal-mark{width:28px;height:28px;border-radius:8px;background:var(--gold);display:flex;align-items:center;justify-content:center}
+.modal-mark svg{width:13px;height:13px;stroke:var(--night);fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
+.modal-brand{font-size:15px;font-weight:700;color:var(--text)}
+.modal-title{font-size:22px;font-weight:700;color:var(--text);margin-bottom:6px;letter-spacing:-.3px}
+.modal-sub{font-size:13px;color:var(--text2);margin-bottom:28px;line-height:1.6}
+.modal-field{margin-bottom:14px}
+.modal-label{font-size:11px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--text3);margin-bottom:7px}
+.modal-inp{
+  width:100%;background:rgba(255,255,255,.05);
+  border:1px solid var(--border2);border-radius:10px;
+  padding:12px 14px;font-size:14px;color:var(--text);
+  font-family:var(--sans);outline:none;transition:border-color .15s;
+}
+.modal-inp:focus{border-color:rgba(232,184,75,.5)}
+.modal-inp::placeholder{color:var(--text3)}
+.btn-modal-submit{
+  width:100%;margin-top:20px;
+  font-size:14px;font-weight:700;
+  background:var(--gold);color:var(--night);
+  border:none;padding:13px;border-radius:10px;cursor:none;
+  transition:opacity .15s;
+  box-shadow:0 2px 16px rgba(232,184,75,.25);
+}
+.btn-modal-submit:hover{opacity:.9}
+.modal-divider{display:flex;align-items:center;gap:12px;margin:20px 0}
+.modal-divider-line{flex:1;height:1px;background:var(--border)}
+.modal-divider-text{font-size:12px;color:var(--text3)}
+.modal-footer-text{font-size:12px;color:var(--text3);text-align:center;line-height:1.7}
+.modal-footer-text a{color:var(--gold);text-decoration:none}
+.modal-footer-text a:hover{text-decoration:underline}
+@keyframes pop{from{opacity:0;transform:scale(.8)}to{opacity:1;transform:scale(1)}}
+@keyframes su{from{opacity:0;transform:translateY(110%)}to{opacity:1;transform:translateY(0)}}
+@keyframes fu{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+.r{opacity:0;transform:translateY(22px);transition:opacity .7s cubic-bezier(.16,1,.3,1),transform .7s cubic-bezier(.16,1,.3,1)}
+.r.in{opacity:1;transform:translateY(0)}
+.d1{transition-delay:.08s}.d2{transition-delay:.16s}.d3{transition-delay:.24s}.d4{transition-delay:.32s}
+</style>
+</head>
+<body>
+
+<div id="cur"></div>
+<div id="cur-ring"></div>
+
+<nav>
+  <a href="#" class="logo">
+    <div class="logo-mark"><svg viewBox="0 0 16 16"><polyline points="2,12 6,6 10,9 14,3"/></svg></div>
+    <span class="logo-name">Verso</span>
+  </a>
+  <div class="nav-links">
+    <a href="#how" class="nav-a">How it works</a>
+    <a href="#features" class="nav-a">Features</a>
+    <a href="#cta" class="nav-a">Pricing</a>
+  </div>
+  <div class="nav-r">
+    <a href="#" class="btn-nav-ghost" onclick="openModal();return false;">Sign in</a>
+    <a href="verso_onboarding.html" class="btn-nav-gold">Get started free</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-inner">
+    <div class="hero-pill"><span class="pill-dot"></span>AI advisor for everyday investors</div>
+    <h1>
+      <span class="hl"><span>Investing made</span></span>
+      <span class="hl"><span><em>human.</em></span></span>
+    </h1>
+    <p class="hero-sub">Tell us about your real life — income, goals, debts. We build your personalized portfolio and explain every decision in plain English. No jargon. Ever.</p>
+    <div class="hero-btns">
+      <a href="verso_onboarding.html" class="btn-gold">Build my portfolio — free</a>
+      <a href="#how" class="btn-outline">See how it works</a>
+    </div>
+    <p class="hero-caption">No credit card · 5 minutes · No finance degree required</p>
+
+    <div class="hero-split">
+
+      <!-- PHONE -->
+      <div class="phone-wrap">
+        <div class="phone">
+          <div class="phone-notch"></div>
+          <div class="phone-inner">
+            <div class="ph-greeting">Good morning, Priya 👋<br><span>Your portfolio is on track.</span></div>
+            <div class="ph-card">
+              <div class="ph-card-lbl">Total portfolio</div>
+              <div class="ph-card-val">$24,680</div>
+              <div class="ph-card-sub">+$312 today · +8.4% since Jan</div>
+            </div>
+            <div class="ph-mini-stats">
+              <div class="ph-ms"><div class="ph-ms-l">Risk</div><div class="ph-ms-v">6.2<span style="font-size:9px;color:var(--text3)">/10</span></div><div class="ph-ms-s muted">Balanced</div></div>
+              <div class="ph-ms"><div class="ph-ms-l">On track</div><div class="ph-ms-v up">Yes ✓</div><div class="ph-ms-s muted">Retire 2048</div></div>
+            </div>
+            <div class="ph-alloc-label">Allocation</div>
+            <div class="ph-alloc">
+              <div class="ph-al"><div class="ph-al-meta"><span class="ph-al-name">Equity</span><span class="ph-al-pct">65%</span></div><div class="ph-bar"><div class="ph-fill pf-g" style="width:65%"></div></div></div>
+              <div class="ph-al"><div class="ph-al-meta"><span class="ph-al-name">Bonds</span><span class="ph-al-pct">25%</span></div><div class="ph-bar"><div class="ph-fill pf-b" style="width:25%"></div></div></div>
+              <div class="ph-al"><div class="ph-al-meta"><span class="ph-al-name">Cash</span><span class="ph-al-pct">10%</span></div><div class="ph-bar"><div class="ph-fill pf-gr" style="width:10%"></div></div></div>
+            </div>
+            <div class="ph-alert">
+              <div class="ph-alert-t">Verso insight</div>
+              <div class="ph-alert-d">Tech is 74% of equity. Redirect next 2 contributions to bonds.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CHAT PANEL -->
+      <div class="chat-panel">
+        <div class="cp-top">
+          <div class="cp-title">
+            <div class="cp-av">V</div>
+            <span class="cp-name">Ask Verso</span>
+          </div>
+          <div class="cp-live"><span class="cp-live-dot"></span>Live data</div>
+        </div>
+        <div class="cp-msgs">
+          <div class="cm u"><div class="av av-u">P</div><div class="cb cb-u">Why is my tech allocation so high?</div></div>
+          <div class="cm">
+            <div class="av av-v">V</div>
+            <div class="cb cb-v">
+              <div class="cb-lbl">Verso</div>
+              NVDA and AAPL grew 18% this quarter, pushing tech to 74% of your equity. Fine for your 10yr horizon — redirect your next 2 contributions to bonds to rebalance without selling anything.
+              <div class="chips"><span class="chip">No action needed now</span><span class="chip">Rebalance in ~6 wks</span></div>
+            </div>
+          </div>
+          <div class="cm u"><div class="av av-u">P</div><div class="cb cb-u">What if markets drop 20%?</div></div>
+          <div class="cm">
+            <div class="av av-v">V</div>
+            <div class="cb cb-v">
+              <div class="cb-lbl">Verso</div>
+              You'd drop to ~$19,740. Recovery takes 2–3 years historically. Your bond cushion protects the house goal. Do nothing — or add $200 this month while prices are lower.
+              <div class="chips"><span class="chip">Recovery: 2–3yrs</span><span class="chip">Your plan survives this</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="cp-input-row">
+          <div class="cp-input">Ask anything about your portfolio...</div>
+          <button class="cp-send"><svg viewBox="0 0 14 14"><line x1="2" y1="7" x2="12" y2="7"/><polyline points="8,3 12,7 8,11"/></svg></button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- LOGOS -->
+<div class="logos">
+  <span class="logos-lbl">Connects with your brokerage</span>
+  <span class="broker">Robinhood</span>
+  <span class="broker">Fidelity</span>
+  <span class="broker">E*Trade</span>
+  <span class="broker">Webull</span>
+  <span class="broker">Schwab</span>
+  <span class="broker">+ more</span>
+</div>
+
+<!-- STATS -->
+<div class="stats">
+  <div class="stat r"><div class="stat-n">5<span style="font-size:26px;font-weight:500"> min</span></div><div class="stat-l">To build your complete investor profile</div></div>
+  <div class="stat r d1"><div class="stat-n">20</div><div class="stat-l">Financial factors we analyze per person</div></div>
+  <div class="stat r d2"><div class="stat-n">2×</div><div class="stat-l">Dimensions of risk — appetite and capacity</div></div>
+  <div class="stat r d3"><div class="stat-n">0</div><div class="stat-l">Jargon in any recommendation. Ever.</div></div>
+</div>
+
+<!-- PROBLEMS -->
+<section class="sec alt" id="problems">
+  <div class="sec-tag">The problem</div>
+  <h2 class="sec-h r">Every other tool leaves<br>you <em>on your own.</em></h2>
+  <p class="sec-sub r">We audited every major investing app. Here's exactly what they get wrong.</p>
+  <div class="probs">
+    <div class="prob r"><div class="prob-ico pi1">🎰</div><div class="prob-who">Robinhood</div><div class="prob-title">Designed like a casino</div><p class="prob-desc">Confetti on purchases. Streak rewards. Built to maximize how often you trade, not how well you invest.</p><span class="prob-tag pt-r">Harmful UX</span></div>
+    <div class="prob r d1"><div class="prob-ico pi2">📋</div><div class="prob-who">Betterment</div><div class="prob-title">5 questions → black box</div><p class="prob-desc">A risk slider and a goal. Your debts, income, emergency fund, and dependents? Completely ignored.</p><span class="prob-tag pt-a">Shallow profiling</span></div>
+    <div class="prob r d2"><div class="prob-ico pi3">🪙</div><div class="prob-who">Acorns</div><div class="prob-title">Keeps you thinking small</div><p class="prob-desc">Round-ups are cute. But "spare change" caps your ambition. Three buckets for eight billion humans.</p><span class="prob-tag pt-a">No personalization</span></div>
+    <div class="prob r d3"><div class="prob-ico pi4">📊</div><div class="prob-who">Wealthfront</div><div class="prob-title">Built for finance PhDs</div><p class="prob-desc">Impressive tech. Hostile interface. If you don't know "direct indexing" you're lost on page one.</p><span class="prob-tag pt-r">Beginner-hostile</span></div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS — TIMELINE -->
+<section class="sec" id="how">
+  <div class="sec-tag">How it works</div>
+  <h2 class="sec-h r">From zero to a portfolio<br>that <em>fits your life.</em></h2>
+  <p class="sec-sub r">Not your risk score. Your actual life — income, goals, debts, and everything in between.</p>
+  <div class="how-wrap">
+    <div class="how-line"></div>
+    <div class="how-steps">
+
+      <div class="how-step r">
+        <div class="how-node active-node"></div>
+        <div class="how-step-num">01 — Onboarding</div>
+        <div class="how-step-title">Tell us about your life</div>
+        <p class="how-step-desc">Ten conversational questions covering income stability, debts, emergency fund, dependents, goals, and time horizon. No spreadsheets. No jargon. Just a friendly chat that takes 5 minutes.</p>
+        <div class="how-detail">
+          <span class="how-chip">Income &amp; stability</span>
+          <span class="how-chip">Emergency fund</span>
+          <span class="how-chip">Debts &amp; liabilities</span>
+          <span class="how-chip">Goals &amp; timeline</span>
+        </div>
+      </div>
+
+      <div class="how-step r d1">
+        <div class="how-node"></div>
+        <div class="how-step-num">02 — AI profiling</div>
+        <div class="how-step-title">We build your investor profile</div>
+        <p class="how-step-desc">We calculate two things no other tool separates: your risk appetite — what you want emotionally — and your risk capacity — what your finances can actually handle. The gap between them is where most investors get hurt.</p>
+        <div class="how-detail">
+          <span class="how-chip">Risk appetite</span>
+          <span class="how-chip">Risk capacity</span>
+          <span class="how-chip">Investor type</span>
+        </div>
+      </div>
+
+      <div class="how-step r d2">
+        <div class="how-node"></div>
+        <div class="how-step-num">03 — Conversational AI</div>
+        <div class="how-step-title">Get your portfolio, fully explained</div>
+        <p class="how-step-desc">Every allocation decision arrives with a plain-English reason. Ask why. Ask what-if. Ask "what happens if I lose my job?" We'll always answer clearly, with cited sources — never a black box, never a shrug.</p>
+        <div class="how-detail">
+          <span class="how-chip">Plain English always</span>
+          <span class="how-chip">Scenario modeling</span>
+          <span class="how-chip">Cited sources</span>
+        </div>
+      </div>
+
+      <div class="how-step r d3">
+        <div class="how-node"></div>
+        <div class="how-step-num">04 — Living portfolio</div>
+        <div class="how-step-title">Adapt as your life changes</div>
+        <p class="how-step-desc">New job. New baby. New goal. Update your profile and your strategy updates with it — instantly. No annual review. No $300/hour advisor call. Just your portfolio, keeping pace with your life.</p>
+        <div class="how-detail">
+          <span class="how-chip">Rebalancing alerts</span>
+          <span class="how-chip">Life-change updates</span>
+          <span class="how-chip">Brokerage sync</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES + PROFILE -->
+<section class="sec alt" id="features">
+  <div class="feat-split">
+    <div class="r">
+      <div class="sec-tag">What makes us different</div>
+      <h2 class="sec-h">Built around you,<br>not a <em>risk bucket.</em></h2>
+      <p class="sec-sub">Every other tool puts you in a box. Verso builds the box around you.</p>
+      <div class="feat-list">
+        <div class="fi"><div class="fi-dot"><svg viewBox="0 0 11 11"><polyline points="1.5,5.5 4.5,8.5 9.5,2.5"/></svg></div><div><div class="fi-title">FINRA-informed 20-factor profiling</div><div class="fi-desc">Income, debts, emergency fund, dependents, goals, tax status, time horizon. All 20 suitability factors that actually matter.</div></div></div>
+        <div class="fi"><div class="fi-dot"><svg viewBox="0 0 11 11"><polyline points="1.5,5.5 4.5,8.5 9.5,2.5"/></svg></div><div><div class="fi-title">Risk appetite vs. capacity — separated</div><div class="fi-desc">What you want emotionally vs. what your finances can handle. The gap between these is where most investors get hurt.</div></div></div>
+        <div class="fi"><div class="fi-dot"><svg viewBox="0 0 11 11"><polyline points="1.5,5.5 4.5,8.5 9.5,2.5"/></svg></div><div><div class="fi-title">Plain English — always</div><div class="fi-desc">No Sharpe ratios, no alpha. Every recommendation has a reason a 10-year-old would understand.</div></div></div>
+        <div class="fi"><div class="fi-dot"><svg viewBox="0 0 11 11"><polyline points="1.5,5.5 4.5,8.5 9.5,2.5"/></svg></div><div><div class="fi-title">Designed for your wellbeing, not engagement</div><div class="fi-desc">No confetti. No streaks. No push to trade more. Calm guidance that builds confidence over time.</div></div></div>
+        <div class="fi"><div class="fi-dot"><svg viewBox="0 0 11 11"><polyline points="1.5,5.5 4.5,8.5 9.5,2.5"/></svg></div><div><div class="fi-title">Scenario modeling before you act</div><div class="fi-desc">"What if markets drop 20%?" See the impact before you touch anything. Full information, always.</div></div></div>
+      </div>
+    </div>
+    <div class="r d2">
+      <div class="profile-card">
+        <div class="pc-top">
+          <div class="pc-av">P</div>
+          <div><div class="pc-n">Priya K.</div><div class="pc-type">Balanced Growth Investor</div></div>
+          <div class="pc-badge">✓ Complete</div>
+        </div>
+        <div class="pc-sec">
+          <div class="pc-sec-lbl">Financial snapshot</div>
+          <div class="pc-row"><span class="pc-k">Age range</span><span class="pc-v">28–34</span></div>
+          <div class="pc-row"><span class="pc-k">Employment</span><span class="pc-v ok">Stable, full-time ✓</span></div>
+          <div class="pc-row"><span class="pc-k">Monthly investable</span><span class="pc-v">$600–$900</span></div>
+          <div class="pc-row"><span class="pc-k">Emergency fund</span><span class="pc-v ok">3–6 months ✓</span></div>
+          <div class="pc-row"><span class="pc-k">Debt pressure</span><span class="pc-v warn">Medium (student loan)</span></div>
+          <div class="pc-row"><span class="pc-k">Primary goal</span><span class="pc-v">Retirement · 10+ yrs</span></div>
+        </div>
+        <div class="pc-sec">
+          <div class="pc-sec-lbl">Suggested allocation</div>
+          <div class="alloc">
+            <div class="al"><div class="al-meta"><span class="al-name">Equity</span><span class="al-pct">65%</span></div><div class="al-bar"><div class="al-fill fg" style="width:65%"></div></div></div>
+            <div class="al"><div class="al-meta"><span class="al-name">Bonds</span><span class="al-pct">25%</span></div><div class="al-bar"><div class="al-fill fb" style="width:25%"></div></div></div>
+            <div class="al"><div class="al-meta"><span class="al-name">Cash</span><span class="al-pct">10%</span></div><div class="al-bar"><div class="al-fill fgr" style="width:10%"></div></div></div>
+          </div>
+        </div>
+        <div class="pc-note"><strong>Verso says:</strong> Your stable income and solid emergency fund mean you can handle equity risk. We're keeping 25% in bonds as a cushion for your house goal in ~4 years — so a market dip won't force you to sell at a loss.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-section" id="cta">
+  <div class="cta-glow"></div>
+  <div class="cta-inner r">
+    <div class="cta-tag">Ready to start?</div>
+    <h2 class="cta-h">Investing that finally<br><em>makes sense.</em></h2>
+    <p class="cta-sub">Build your personalized portfolio in 5 minutes. No jargon, no confusion, no finance degree required.</p>
+    <div class="cta-btns">
+      <a href="verso_onboarding.html" class="btn-gold">Build my portfolio — it's free</a>
+      <a href="#how" class="btn-outline">See how it works</a>
+    </div>
+    <p class="cta-legal">Educational guidance only · FINRA suitability informed · Not financial advice</p>
+  </div>
+</section>
+
+<footer>
+  <a href="#" class="f-logo"><div class="f-mark"><svg viewBox="0 0 16 16"><polyline points="2,12 6,6 10,9 14,3"/></svg></div><span class="f-name">Verso</span></a>
+  <ul class="f-links"><li><a href="#">Privacy</a></li><li><a href="#">Terms</a></li><li><a href="#">FAQ</a></li><li><a href="#">Contact</a></li></ul>
+  <span class="f-copy">© 2025 Verso · JSOM × Goldman Sachs Hackathon</span>
+</footer>
+
+<!-- SIGN IN MODAL -->
+<div class="modal-overlay" id="signinModal" onclick="closeModalOutside(event)">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <div class="modal-logo">
+      <div class="modal-mark"><svg viewBox="0 0 16 16"><polyline points="2,12 6,6 10,9 14,3"/></svg></div>
+      <span class="modal-brand">Verso</span>
+    </div>
+
+    <!-- VIEW 1: Choose path -->
+    <div id="modalViewChoose">
+      <div class="modal-title">Get started</div>
+      <div class="modal-sub">New to Verso? Build your portfolio first — takes 5 minutes, no account needed upfront.</div>
+      <a href="verso_onboarding.html" style="display:block;width:100%;margin-bottom:10px;text-align:center;font-size:15px;font-weight:700;background:var(--gold);color:var(--night);padding:14px;border-radius:10px;text-decoration:none;box-shadow:0 2px 16px rgba(232,184,75,.25);transition:opacity .15s" onmouseover="this.style.opacity='.9'" onmouseout="this.style.opacity='1'">
+        Build my portfolio →
+      </a>
+      <div class="modal-divider">
+        <div class="modal-divider-line"></div>
+        <span class="modal-divider-text">already have an account?</span>
+        <div class="modal-divider-line"></div>
+      </div>
+      <button onclick="showSignIn()" style="display:block;width:100%;font-size:14px;font-weight:500;color:var(--text2);background:rgba(255,255,255,.05);border:1px solid var(--border2);padding:12px;border-radius:10px;cursor:none;transition:background .15s" onmouseover="this.style.background='rgba(255,255,255,.08)'" onmouseout="this.style.background='rgba(255,255,255,.05)'">
+        Sign in to Verso
+      </button>
+    </div>
+
+    <!-- VIEW 2: Sign in form (hidden initially) -->
+    <div id="modalViewSignin" style="display:none">
+      <div class="modal-title">Welcome back</div>
+      <div class="modal-sub">Sign in to your account — your profile and portfolio are waiting.</div>
+      <div class="modal-field">
+        <div class="modal-label">Email</div>
+        <input class="modal-inp" id="modalEmail" type="email" placeholder="you@example.com"/>
+      </div>
+      <div class="modal-field">
+        <div class="modal-label">Password</div>
+        <input class="modal-inp" id="modalPw" type="password" placeholder="••••••••"/>
+      </div>
+      <div class="modal-error" id="modalError" style="font-size:12px;color:#f87171;margin-bottom:10px;display:none">
+        No account found. Try building your profile first.
+      </div>
+      <button class="btn-modal-submit" onclick="handleSignIn()">Sign in</button>
+      <div style="text-align:center;margin-top:16px">
+        <button onclick="showChoose()" style="font-size:12px;color:var(--text3);background:none;border:none;cursor:none;transition:color .15s" onmouseover="this.style.color='var(--text2)'" onmouseout="this.style.color='var(--text3)'">← Back</button>
+        <span style="font-size:12px;color:var(--text4);margin:0 8px">·</span>
+        <a href="#" style="font-size:12px;color:var(--gold);text-decoration:none">Forgot password?</a>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const cur=document.getElementById('cur'),ring=document.getElementById('cur-ring');
+let mx=0,my=0,rx=0,ry=0;
+document.addEventListener('mousemove',e=>{
+  mx=e.clientX;my=e.clientY;
+  cur.style.left=mx+'px';cur.style.top=my+'px';
+});
+(function loop(){rx+=(mx-rx)*.1;ry+=(my-ry)*.1;ring.style.left=rx+'px';ring.style.top=ry+'px';requestAnimationFrame(loop)})();
+const obs=new IntersectionObserver(e=>{e.forEach(el=>{if(el.isIntersecting)el.target.classList.add('in')})},{threshold:.1});
+document.querySelectorAll('.r').forEach(el=>obs.observe(el));
+
+function openModal(){
+  showChoose();
+  document.getElementById('signinModal').classList.add('open');
+}
+function closeModal(){ document.getElementById('signinModal').classList.remove('open'); }
+function closeModalOutside(e){ if(e.target===document.getElementById('signinModal')) closeModal(); }
+document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeModal(); });
+
+function showChoose(){
+  document.getElementById('modalViewChoose').style.display='block';
+  document.getElementById('modalViewSignin').style.display='none';
+}
+function showSignIn(){
+  document.getElementById('modalViewChoose').style.display='none';
+  document.getElementById('modalViewSignin').style.display='block';
+  setTimeout(()=>document.getElementById('modalEmail').focus(), 100);
+}
+
+const ACCOUNTS={
+  'priya@example.com':'password123',
+  'demo@verso.app':'demo1234',
+  'yashaswir3@gmail.com':'verso2025'
+};
+
+function handleSignIn(){
+  const email = (document.getElementById('modalEmail').value||'').trim().toLowerCase();
+  const pw    = document.getElementById('modalPw').value||'';
+  const err   = document.getElementById('modalError');
+  err.style.display = 'none';
+
+  if(!email){ err.textContent='Please enter your email.'; err.style.display='block'; return; }
+
+  if(ACCOUNTS[email] !== undefined){
+    // existing account → dashboard
+    window.location.href = 'verso_app.html';
+  } else {
+    // no account → send to build portfolio
+    window.location.href = 'verso_onboarding.html';
+  }
+}
+
+// allow Enter key in sign-in form
+document.addEventListener('keydown', e=>{
+  if(e.key==='Enter' && document.getElementById('modalViewSignin').style.display!=='none'){
+    handleSignIn();
+  }
+});
+</script>
+</body>
+</html>
