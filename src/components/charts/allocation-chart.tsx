@@ -1,5 +1,6 @@
 'use client'
 
+import { useMemo } from 'react'
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts'
 
 const COLORS = [
@@ -13,13 +14,30 @@ interface DataPoint {
 }
 
 export function AllocationChart({ data }: { data: DataPoint[] }) {
-  if (!data.length) return null
+  const normalizedData = useMemo(
+    () =>
+      data
+        .map((point) => ({
+          name: point.name,
+          value: typeof point.value === 'number' ? point.value : Number(point.value),
+        }))
+        .filter((point) => Number.isFinite(point.value) && point.value > 0),
+    [data]
+  )
+
+  if (!normalizedData.length) {
+    return (
+      <div className="h-[220px] w-full flex items-center justify-center text-xs text-white/40 border border-white/10 rounded-xl bg-white/[0.02]">
+        No allocation data available
+      </div>
+    )
+  }
 
   return (
     <ResponsiveContainer width="100%" height={220}>
       <PieChart>
         <Pie
-          data={data}
+          data={normalizedData}
           cx="50%"
           cy="50%"
           innerRadius={65}
@@ -28,7 +46,7 @@ export function AllocationChart({ data }: { data: DataPoint[] }) {
           dataKey="value"
           stroke="none"
         >
-          {data.map((_, index) => (
+          {normalizedData.map((_, index) => (
             <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
           ))}
         </Pie>

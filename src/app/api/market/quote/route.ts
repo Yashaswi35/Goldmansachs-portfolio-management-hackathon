@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getQuote, getQuotes } from '@/lib/market-data/yahoo'
+import { getFundamentals, getQuote, getQuotes } from '@/lib/market-data/yahoo'
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
@@ -19,6 +19,13 @@ export async function GET(request: NextRequest) {
   const quote = await getQuote(ticker)
   if (!quote) {
     return NextResponse.json({ error: 'Quote not found' }, { status: 404 })
+  }
+
+  if (!quote.sector) {
+    const fundamentals = await getFundamentals(ticker)
+    if (fundamentals?.sector) {
+      return NextResponse.json({ ...quote, sector: fundamentals.sector })
+    }
   }
 
   return NextResponse.json(quote)

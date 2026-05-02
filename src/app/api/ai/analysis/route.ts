@@ -1,8 +1,90 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { openai } from '@/lib/openai/client'
 import { createClient } from '@/lib/supabase/server'
-import { getQuotes } from '@/lib/market-data/yahoo'
 import type { HoldingWithPrice, PortfolioAnalysis } from '@/types'
+import { buildPersonalizedPolicy, buildPolicyDiagnostics } from '@/lib/personalization/policy'
+import { applyPortfolioAnalysisCompliance } from '@/lib/personalization/compliance'
+import {
+  RANKED_RISK_SYSTEM_PROMPT,
+  buildIspPayload,
+  buildRankedRiskUserPrompt,
+  normalizeRankedRisks,
+} from '@/lib/personalization/risk-ranking'
+import { getOrBuildUserAiContext } from '@/lib/personalization/user-context'
+
+function parseJsonLoose(input: string): unknown {
+  const trimmed = (input || '').trim()
+  if (!trimmed) return null
+  try {
+    return JSON.parse(trimmed)
+  } catch {
+    const codeBlockMatch = trimmed.match(/```(?:json)?\s*([\s\S]*?)```/i)
+    if (codeBlockMatch?.[1]) {
+      try {
+        return JSON.parse(codeBlockMatch[1].trim())
+      } catch {
+        return null
+      }
+    }
+    return null
+  }
+}
+
+function buildDeterministicAnalysisFallback(input: {
+  totalValue: number
+  diagnostics: ReturnType<typeof buildPolicyDiagnostics>
+  profile: Awaited<ReturnType<typeof getOrBuildUserAiContext>>['profile']
+  policy: ReturnType<typeof buildPersonalizedPolicy>
+}): PortfolioAnalysis {
+  const { totalValue, diagnostics, profile, policy } = input
+  const flags = diagnostics.concentration_flags || []
+  const concentrationTop = Object.entries(diagnostics.sector_concentration || {})
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 3)
+  const stockDrift = diagnostics.stock_pct - policy.target_stock_max_pct
+  const bondShortfall = policy.target_bond_min_pct - diagnostics.bond_pct
+
+  const penalty = Math.min(65, flags.length * 12 + (stockDrift > 0 ? Math.min(20, stockDrift) : 0) + (bondShortfall > 0 ? Math.min(15, bondShortfall) : 0))
+  const health = Math.max(28, Math.round(92 - penalty))
+
+  const top_risks = [
+    ...flags,
+    stockDrift > 0 ? `Stock exposure is ${diagnostics.stock_pct.toFixed(1)}%, above your policy max of ${policy.target_stock_max_pct}%.` : null,
+    bondShortfall > 0 ? `Bond exposure is ${diagnostics.bond_pct.toFixed(1)}%, below your policy minimum of ${policy.target_bond_min_pct}%.` : null,
+    concentrationTop[0] ? `Largest sector is ${concentrationTop[0][0]} at ${concentrationTop[0][1].toFixed(1)}% of your portfolio.` : null,
+  ].filter(Boolean).slice(0, 6) as string[]
+
+  const insights = [
+    `Your portfolio value is about $${totalValue.toLocaleString('en-US', { maximumFractionDigits: 0 })}. Keep your highest-conviction positions, but right-size oversized risk buckets first.`,
+    `Rebalance in small steps to move toward your target mix (stocks ${policy.target_stock_min_pct}-${policy.target_stock_max_pct}%, bonds ${policy.target_bond_min_pct}-${policy.target_bond_max_pct}%).`,
+    `Set a repeatable review cadence (monthly or quarterly) so risk drift is corrected early instead of after large swings.`,
+  ]
+
+  return {
+    health_score: health,
+    risk_assessment: `Your portfolio is currently ${health >= 70 ? 'reasonably aligned' : 'showing material drift'} versus your risk policy. Most risk comes from concentration and stock/bond mix imbalance relative to your stated profile.`,
+    top_risks,
+    ranked_risks: [],
+    insights,
+    sector_concentration: diagnostics.sector_concentration,
+    suggested_additions: [
+      {
+        ticker: 'BND',
+        company_name: 'Vanguard Total Bond Market ETF',
+        reason: `Helps improve fixed-income balance for a ${profile?.risk_archetype || profile?.risk_tolerance || 'moderate'} profile.`,
+        asset_type: 'bond',
+        risk_level: 3,
+      },
+      {
+        ticker: 'VXUS',
+        company_name: 'Vanguard Total International Stock ETF',
+        reason: 'Adds broad international diversification to reduce single-market concentration.',
+        asset_type: 'etf',
+        risk_level: 5,
+      },
+    ],
+  }
+}
 
 export async function POST(request: NextRequest) {
   const supabase = await createClient()
@@ -10,54 +92,44 @@ export async function POST(request: NextRequest) {
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const { portfolio_id } = await request.json()
+  const userContext = await getOrBuildUserAiContext({
+    supabase,
+    userId: user.id,
+    portfolioId: portfolio_id,
+  })
 
-  const [profileRes, holdingsRes] = await Promise.all([
-    supabase.from('profiles').select('*').eq('id', user.id).single(),
-    supabase.from('holdings').select('*').eq('portfolio_id', portfolio_id),
-  ])
+  const profile = userContext.profile
+  const holdingsWithPrices = userContext.holdings as HoldingWithPrice[]
 
-  const profile = profileRes.data
-  const holdings = holdingsRes.data || []
-
-  if (holdings.length === 0) {
+  if (holdingsWithPrices.length === 0) {
     return NextResponse.json({
       health_score: 0,
       risk_assessment: 'Add investments to your portfolio to get an analysis.',
       top_risks: [],
+      ranked_risks: [],
       insights: ['Start by adding your first investment to see personalized insights.'],
       sector_concentration: {},
       suggested_additions: [],
     } as PortfolioAnalysis)
   }
 
-  const tickers = holdings.map((h) => h.ticker)
-  const quotes = await getQuotes(tickers)
-
-  let totalValue = 0
-  const holdingsWithPrices: HoldingWithPrice[] = holdings.map((h) => {
-    const quote = quotes[h.ticker.toUpperCase()]
-    const current_price = quote?.current_price ?? h.avg_cost_basis
-    const current_value = current_price * h.shares
-    totalValue += current_value
-    return {
-      ...h,
-      current_price,
-      daily_change_pct: quote?.daily_change_pct ?? 0,
-      current_value,
-      gain_loss: current_value - h.avg_cost_basis * h.shares,
-      gain_loss_pct: ((current_price - h.avg_cost_basis) / h.avg_cost_basis) * 100,
-      allocation_pct: 0,
-    }
-  })
-
-  holdingsWithPrices.forEach((h) => {
-    h.allocation_pct = totalValue > 0 ? (h.current_value / totalValue) * 100 : 0
-  })
+  const totalValue = userContext.total_value
+  const policy = buildPersonalizedPolicy(profile)
+  const diagnostics = buildPolicyDiagnostics(
+    holdingsWithPrices.map((h) => ({
+      ticker: h.ticker,
+      current_value: h.current_value,
+      asset_type: h.asset_type,
+      sector: h.sector,
+    })),
+    totalValue,
+    policy
+  )
 
   const portfolioSummary = holdingsWithPrices.map((h) => ({
     ticker: h.ticker,
     company: h.company_name,
-    sector: h.sector || quotes[h.ticker.toUpperCase()]?.sector,
+    sector: h.sector,
     shares: h.shares,
     currentValue: h.current_value.toFixed(2),
     allocationPct: h.allocation_pct.toFixed(1),
@@ -75,6 +147,16 @@ USER PROFILE:
 - Dependents: ${profile?.num_dependents ?? 0}
 - Investment goal: ${profile?.investment_goal ?? 'unknown'}
 - Time horizon: ${profile?.investment_horizon ?? 'unknown'}
+
+PERSONALIZED POLICY CONSTRAINTS (NON-NEGOTIABLE):
+- Risk bucket: ${policy.risk_bucket}
+- Target stock range: ${policy.target_stock_min_pct}-${policy.target_stock_max_pct}%
+- Target bond range: ${policy.target_bond_min_pct}-${policy.target_bond_max_pct}%
+- Max single position: ${policy.max_single_position_pct}%
+- Max sector concentration: ${policy.max_sector_pct}%
+- Current stock pct: ${diagnostics.stock_pct.toFixed(1)}%
+- Current bond pct: ${diagnostics.bond_pct.toFixed(1)}%
+- Current policy flags: ${diagnostics.concentration_flags.length ? diagnostics.concentration_flags.join(' | ') : 'none'}
 
 PORTFOLIO (Total: $${totalValue.toFixed(2)}):
 ${JSON.stringify(portfolioSummary, null, 2)}
@@ -104,13 +186,69 @@ Rules:
 - suggested_additions: 2-3 suggestions that complement their portfolio gaps
 - Never say "diversify" without explaining what that means`
 
-  const completion = await openai.chat.completions.create({
-    model: 'gpt-4o',
-    messages: [{ role: 'user', content: prompt }],
-    response_format: { type: 'json_object' },
-    temperature: 0.3,
+  let analysis: PortfolioAnalysis = buildDeterministicAnalysisFallback({
+    totalValue,
+    diagnostics,
+    profile,
+    policy,
   })
+  try {
+    const completion = await openai.chat.completions.create({
+      model: 'gpt-4o',
+      messages: [{ role: 'user', content: prompt }],
+      response_format: { type: 'json_object' },
+      temperature: 0.3,
+    })
+    const parsed = JSON.parse(completion.choices[0].message.content || '{}') as Partial<PortfolioAnalysis>
+    analysis = {
+      ...analysis,
+      ...parsed,
+      top_risks: Array.isArray(parsed.top_risks) ? parsed.top_risks : analysis.top_risks,
+      insights: Array.isArray(parsed.insights) ? parsed.insights : analysis.insights,
+      suggested_additions: Array.isArray(parsed.suggested_additions) ? parsed.suggested_additions : analysis.suggested_additions,
+      sector_concentration: parsed.sector_concentration && typeof parsed.sector_concentration === 'object'
+        ? parsed.sector_concentration
+        : analysis.sector_concentration,
+      health_score: typeof parsed.health_score === 'number' ? parsed.health_score : analysis.health_score,
+      risk_assessment: typeof parsed.risk_assessment === 'string' ? parsed.risk_assessment : analysis.risk_assessment,
+    } as PortfolioAnalysis
+  } catch {
+    // deterministic fallback remains
+  }
 
-  const analysis = JSON.parse(completion.choices[0].message.content || '{}') as PortfolioAnalysis
-  return NextResponse.json(analysis)
+  let ranked_risks: NonNullable<PortfolioAnalysis['ranked_risks']> = []
+  try {
+    const riskRankingCompletion = await openai.chat.completions.create({
+      model: 'gpt-4o',
+      messages: [
+        { role: 'system', content: RANKED_RISK_SYSTEM_PROMPT },
+        { role: 'user', content: buildRankedRiskUserPrompt(buildIspPayload({ profile, holdings: holdingsWithPrices, marketContext: userContext.market_context })) },
+      ],
+      temperature: 0.2,
+    })
+
+    const rankedRiskParsed = parseJsonLoose(riskRankingCompletion.choices[0].message.content || '')
+    ranked_risks = normalizeRankedRisks(
+      Array.isArray(rankedRiskParsed)
+        ? rankedRiskParsed
+        : (rankedRiskParsed as { risks?: unknown[] } | null)?.risks || []
+    )
+  } catch {
+    ranked_risks = []
+  }
+  const existingRisks = Array.isArray(analysis.top_risks) ? analysis.top_risks : []
+  const rankedRiskLabels = ranked_risks.map((r) => `${r.risk}: ${r.plain_english}`)
+  const deterministicRisks = diagnostics.concentration_flags.slice(0, 3)
+  const top_risks = Array.from(new Set([...deterministicRisks, ...rankedRiskLabels, ...existingRisks])).slice(0, 6)
+
+  const merged = {
+    ...analysis,
+    sector_concentration: diagnostics.sector_concentration,
+    top_risks,
+    ranked_risks,
+  } as PortfolioAnalysis
+
+  return NextResponse.json(
+    applyPortfolioAnalysisCompliance(merged, profile, policy, diagnostics)
+  )
 }

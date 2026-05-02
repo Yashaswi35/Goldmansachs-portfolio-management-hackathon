@@ -16,26 +16,26 @@ import type { RebalancingScenario, RebalancingAction } from '@/types'
 const SCENARIO_CONFIG = {
   conservative: {
     icon: Shield,
-    color: '#10B981',
-    bg: '#10B981',
-    gradient: 'from-[#10B981]/10 to-[#10B981]/5',
-    border: 'border-[#10B981]/20',
+    color: '#D6D3D1',
+    bg: '#D6D3D1',
+    gradient: 'from-white/[0.05] to-white/[0.02]',
+    border: 'border-white/15',
     label: 'Conservative',
   },
   moderate: {
     icon: TrendingUp,
-    color: '#4F8EF7',
-    bg: '#4F8EF7',
-    gradient: 'from-[#4F8EF7]/10 to-[#4F8EF7]/5',
-    border: 'border-[#4F8EF7]/20',
+    color: '#D6D3D1',
+    bg: '#D6D3D1',
+    gradient: 'from-white/[0.05] to-white/[0.02]',
+    border: 'border-white/15',
     label: 'Moderate',
   },
   aggressive: {
     icon: Zap,
-    color: '#a78bfa',
-    bg: '#a78bfa',
-    gradient: 'from-[#a78bfa]/10 to-[#a78bfa]/5',
-    border: 'border-[#a78bfa]/20',
+    color: '#D6D3D1',
+    bg: '#D6D3D1',
+    gradient: 'from-white/[0.05] to-white/[0.02]',
+    border: 'border-white/15',
     label: 'Aggressive',
   },
 }
@@ -43,6 +43,9 @@ const SCENARIO_CONFIG = {
 export default function RebalancePage() {
   const supabase = createClient()
   const [scenarios, setScenarios] = useState<RebalancingScenario[]>([])
+  const [triggerReason, setTriggerReason] = useState<string | null>(null)
+  const [triggered, setTriggered] = useState<boolean | null>(null)
+  const [mode, setMode] = useState<'threshold' | 'calendar' | 'hybrid'>('hybrid')
   const [loading, setLoading] = useState(false)
   const [portfolioId, setPortfolioId] = useState<string | null>(null)
   const [hasHoldings, setHasHoldings] = useState(false)
@@ -76,10 +79,12 @@ export default function RebalancePage() {
       const res = await fetch('/api/ai/rebalance', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ portfolio_id: portfolioId }),
+        body: JSON.stringify({ portfolio_id: portfolioId, mode, threshold_pct: 5 }),
       })
       const data = await res.json()
       setScenarios(data.scenarios || [])
+      setTriggerReason(data.trigger_reason || null)
+      setTriggered(typeof data.trigger === 'boolean' ? data.trigger : null)
     } finally {
       setLoading(false)
     }
@@ -95,19 +100,42 @@ export default function RebalancePage() {
             <h1 className="text-2xl font-bold text-white">Smart <GlossaryTooltip term="rebalancing" /></h1>
             <p className="text-white/40 text-sm mt-0.5">Choose a strategy to optimize your portfolio</p>
           </div>
-          {hasHoldings && (
-            <Button
-              onClick={generateScenarios}
-              disabled={loading}
-              className="bg-[#4F8EF7] hover:bg-[#4F8EF7]/90 text-white rounded-xl gap-2 h-10"
-            >
-              {loading ? (
-                <><RefreshCw className="w-4 h-4 animate-spin" /> Generating...</>
-              ) : (
-                <><Shuffle className="w-4 h-4" /> {ran ? 'Regenerate' : 'Generate Strategies'}</>
-              )}
-            </Button>
-          )}
+          <div className="flex items-center gap-2">
+            {hasHoldings && (
+              <>
+                <div className="flex gap-1.5">
+                  {[
+                    { id: 'threshold', label: 'Threshold' },
+                    { id: 'calendar', label: 'Calendar' },
+                    { id: 'hybrid', label: 'Hybrid' },
+                  ].map((m) => (
+                    <button
+                      key={m.id}
+                      onClick={() => setMode(m.id as 'threshold' | 'calendar' | 'hybrid')}
+                      className={`px-2.5 py-1.5 rounded-lg text-xs font-medium border transition-all ${
+                        mode === m.id
+                          ? 'bg-[#ECE6DB] border-[#ECE6DB]/70 text-[#1E1A18]'
+                          : 'bg-white/5 border-white/10 text-white/45 hover:text-white/70'
+                      }`}
+                    >
+                      {m.label}
+                    </button>
+                  ))}
+                </div>
+                <Button
+                  onClick={generateScenarios}
+                  disabled={loading}
+                  className="micro-jiggle bg-[#ECE6DB] hover:bg-[#E2DBCE] text-[#1E1A18] rounded-2xl gap-2 h-10 border border-[#F4EFE4]/30"
+                >
+                  {loading ? (
+                    <><RefreshCw className="w-4 h-4 animate-spin" /> Generating...</>
+                  ) : (
+                    <><Shuffle className="w-4 h-4" /> {ran ? 'Regenerate' : 'Generate Strategies'}</>
+                  )}
+                </Button>
+              </>
+            )}
+          </div>
         </div>
 
         {!hasHoldings ? (
@@ -119,10 +147,19 @@ export default function RebalancePage() {
         ) : scenarios.length > 0 && (
           <AnimatePresence>
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-5">
+              <div className="glass apple-surface rounded-2xl p-4 flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-white/70 text-sm font-medium">Engine Trigger Status</p>
+                  <p className={`text-xs mt-0.5 ${triggered ? 'text-[#10B981]' : 'text-[#f59e0b]'}`}>
+                    {triggered ? 'Triggered' : 'No trigger yet'}
+                  </p>
+                  {triggerReason && <p className="text-white/35 text-xs mt-1">{triggerReason}</p>}
+                </div>
+              </div>
 
               {/* Strategy explanation banner */}
-              <div className="glass rounded-2xl p-4 flex items-start gap-3">
-                <Info className="w-4 h-4 text-[#4F8EF7] mt-0.5 flex-shrink-0" />
+              <div className="glass apple-surface rounded-2xl p-4 flex items-start gap-3">
+                <Info className="w-4 h-4 text-white/60 mt-0.5 flex-shrink-0" />
                 <p className="text-white/50 text-sm">
                   These are <strong className="text-white/70">advisory suggestions only</strong> — we&apos;ll tell you exactly what to do, but you make the final call.
                   Click &quot;Adopt This Strategy&quot; to save it as your plan, then follow the steps at your own pace.
@@ -142,7 +179,7 @@ export default function RebalancePage() {
                 ))}
               </div>
 
-              <div className="glass rounded-2xl p-5 flex items-start gap-3">
+              <div className="glass apple-surface rounded-2xl p-5 flex items-start gap-3">
                 <Info className="w-4 h-4 text-white/30 mt-0.5 flex-shrink-0" />
                 <p className="text-white/30 text-xs">
                   NestEgg does not execute trades. These suggestions are for educational purposes only and do not constitute financial advice.
@@ -172,7 +209,7 @@ function ScenarioCard({ scenario, index, adopted, onAdopt }: {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.1 }}
-      className={`glass rounded-2xl overflow-hidden border transition-all ${
+      className={`glass apple-surface rounded-2xl overflow-hidden border transition-all ${
         adopted ? 'border-' + config.color.slice(1) + '/40' : 'border-white/[0.06]'
       } ${adopted ? 'ring-1 ring-' + config.color.slice(1) + '/20' : ''}`}
       style={adopted ? { borderColor: `${config.color}40`, boxShadow: `0 0 20px ${config.color}10` } : {}}
@@ -260,7 +297,7 @@ function ScenarioCard({ scenario, index, adopted, onAdopt }: {
         <Button
           onClick={() => { onAdopt(); setExpanded(true) }}
           disabled={adopted}
-          className="w-full h-11 rounded-xl font-medium transition-all"
+          className="micro-jiggle w-full h-11 rounded-2xl font-medium transition-all"
           style={adopted
             ? { background: `${config.color}20`, color: config.color, border: `1px solid ${config.color}40` }
             : { background: config.color, color: 'white' }
@@ -279,14 +316,14 @@ function ScenarioCard({ scenario, index, adopted, onAdopt }: {
 
 function ActionRow({ action, color }: { action: RebalancingAction; color: string }) {
   const [showExplanation, setShowExplanation] = useState(false)
-  const actionColors = { buy: '#10B981', sell: '#F43F5E', hold: '#f59e0b' }
+  const actionColors = { buy: '#D6D3D1', sell: '#F43F5E', hold: '#A8A29E' }
   const actionColor = actionColors[action.action]
 
   return (
     <div className="border border-white/[0.06] rounded-xl overflow-hidden">
       <div className="flex items-center gap-3 p-3">
-        <div className="w-8 h-8 rounded-lg bg-[#4F8EF7]/10 flex items-center justify-center flex-shrink-0">
-          <span className="text-[#4F8EF7] text-xs font-bold">{action.ticker.slice(0, 4)}</span>
+        <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center flex-shrink-0">
+          <span className="text-white/75 text-xs font-bold">{action.ticker.slice(0, 4)}</span>
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
@@ -336,7 +373,7 @@ function ActionRow({ action, color }: { action: RebalancingAction; color: string
 }
 
 function ActionChip({ action }: { action: RebalancingAction }) {
-  const actionColors = { buy: '#10B981', sell: '#F43F5E', hold: '#f59e0b' }
+  const actionColors = { buy: '#D6D3D1', sell: '#F43F5E', hold: '#A8A29E' }
   const c = actionColors[action.action]
   return (
     <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border" style={{ color: c, borderColor: `${c}30`, background: `${c}10` }}>
@@ -366,9 +403,9 @@ function RiskMeter({ level, color }: { level: number; color: string }) {
 
 function RebalanceCTA({ onRun }: { onRun: () => void }) {
   return (
-    <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="glass rounded-2xl p-12 text-center">
-      <div className="w-16 h-16 rounded-2xl bg-[#10B981]/10 flex items-center justify-center mx-auto mb-5">
-        <Shuffle className="w-8 h-8 text-[#10B981]" />
+    <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="glass apple-surface rounded-2xl p-12 text-center">
+      <div className="w-16 h-16 rounded-2xl bg-white/10 flex items-center justify-center mx-auto mb-5">
+        <Shuffle className="w-8 h-8 text-white/75" />
       </div>
       <h2 className="text-white font-bold text-xl mb-2">Ready to Optimize Your Portfolio?</h2>
       <p className="text-white/40 text-sm max-w-md mx-auto mb-6">
@@ -378,11 +415,11 @@ function RebalanceCTA({ onRun }: { onRun: () => void }) {
       <div className="flex flex-wrap justify-center gap-3 mb-8 text-xs text-white/40">
         {['3 tailored strategies', 'Plain-English explanations', 'Specific action steps', 'Advisory only — you decide'].map((f) => (
           <span key={f} className="flex items-center gap-1 bg-white/5 px-3 py-1.5 rounded-full">
-            <CheckCircle2 className="w-3 h-3 text-[#10B981]" />{f}
+            <CheckCircle2 className="w-3 h-3 text-white/65" />{f}
           </span>
         ))}
       </div>
-      <Button onClick={onRun} className="bg-[#10B981] hover:bg-[#10B981]/90 text-white rounded-xl gap-2 px-8 h-11">
+      <Button onClick={onRun} className="micro-jiggle bg-[#ECE6DB] hover:bg-[#E2DBCE] text-[#1E1A18] rounded-2xl gap-2 px-8 h-11 border border-[#F4EFE4]/30">
         <Shuffle className="w-4 h-4" /> Generate My Strategies
       </Button>
     </motion.div>
@@ -391,14 +428,14 @@ function RebalanceCTA({ onRun }: { onRun: () => void }) {
 
 function EmptyState() {
   return (
-    <div className="glass rounded-2xl p-12 text-center">
-      <div className="w-14 h-14 rounded-2xl bg-[#10B981]/10 flex items-center justify-center mx-auto mb-4">
-        <Shuffle className="w-7 h-7 text-[#10B981]" />
+    <div className="glass apple-surface rounded-2xl p-12 text-center">
+      <div className="w-14 h-14 rounded-2xl bg-white/10 flex items-center justify-center mx-auto mb-4">
+        <Shuffle className="w-7 h-7 text-white/75" />
       </div>
       <h3 className="text-white font-semibold mb-2">Add investments first</h3>
       <p className="text-white/40 text-sm mb-5">You need at least one investment in your portfolio to generate rebalancing strategies.</p>
       <Link href="/portfolio/add">
-        <Button className="bg-[#4F8EF7] hover:bg-[#4F8EF7]/90 text-white rounded-xl gap-2">
+        <Button className="micro-jiggle bg-[#ECE6DB] hover:bg-[#E2DBCE] text-[#1E1A18] rounded-2xl gap-2 border border-[#F4EFE4]/30">
           <Plus className="w-4 h-4" /> Add Investment
         </Button>
       </Link>
@@ -410,7 +447,7 @@ function LoadingSkeleton() {
   return (
     <div className="space-y-5">
       <div className="glass rounded-2xl p-6 flex items-center gap-4">
-        <div className="w-8 h-8 border-2 border-[#10B981]/30 border-t-[#10B981] rounded-full animate-spin" />
+        <div className="w-8 h-8 border-2 border-white/20 border-t-white/65 rounded-full animate-spin" />
         <div>
           <p className="text-white font-medium">Crafting your strategies...</p>
           <p className="text-white/40 text-sm">Analyzing your holdings and risk profile to generate 3 personalized plans</p>

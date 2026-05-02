@@ -94,6 +94,15 @@ export interface PortfolioAnalysis {
   health_score: number
   risk_assessment: string
   top_risks: string[]
+  ranked_risks?: Array<{
+    risk: string
+    priority: number
+    relevance: number
+    severity: number
+    urgency: number
+    plain_english: string
+    action: string
+  }>
   insights: string[]
   sector_concentration: Record<string, number>
   suggested_additions: SuggestedInvestment[]

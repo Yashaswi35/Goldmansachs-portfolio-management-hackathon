@@ -109,6 +109,19 @@ export interface MarketFundamentals {
   fifty_two_week_low: number | null
 }
 
+export interface PriceHistoryPoint {
+  date: string
+  close: number
+}
+
+export interface MarketHeadline {
+  ticker: string
+  title: string
+  url: string
+  publisher: string | null
+  published_at: string | null
+}
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function pickNum(...values: any[]): number | null {
   for (const value of values) {
@@ -198,6 +211,55 @@ export async function getFundamentalsForTickers(tickers: string[]): Promise<Reco
   return results
 }
 
+export async function getPriceHistory(ticker: string, period: '1mo' | '3mo' | '6mo' | '1y' = '3mo'): Promise<PriceHistoryPoint[]> {
+  const symbol = ticker.toUpperCase()
+  const key = `history:${symbol}:${period}`
+  const cached = getCached<PriceHistoryPoint[]>(key)
+  if (cached) return cached
+
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const chart: any = await withTimeout(yahooFinance.chart(symbol, { range: period, interval: '1d' }), 3500)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const points = (chart?.quotes || []).map((p: any) => {
+      const dateObj = p?.date ? new Date(p.date) : null
+      const close = safeNum(p?.close)
+      if (!dateObj || close === null) return null
+      return { date: dateObj.toISOString().slice(0, 10), close }
+    }).filter(Boolean) as PriceHistoryPoint[]
+
+    if (points.length > 0) {
+      setCache(key, points)
+      return points
+    }
+  } catch {
+    // fallback below
+  }
+
+  try {
+    const now = new Date()
+    const days = period === '1mo' ? 35 : period === '3mo' ? 100 : period === '6mo' ? 190 : 380
+    const period1 = new Date(now.getTime() - days * 24 * 60 * 60 * 1000)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const historical: any[] = await withTimeout(
+      yahooFinance.historical(symbol, { period1, period2: now, interval: '1d' }),
+      3500
+    )
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const points = (historical || []).map((p: any) => {
+      const dateObj = p?.date ? new Date(p.date) : null
+      const close = safeNum(p?.close)
+      if (!dateObj || close === null) return null
+      return { date: dateObj.toISOString().slice(0, 10), close }
+    }).filter(Boolean) as PriceHistoryPoint[]
+
+    setCache(key, points)
+    return points
+  } catch {
+    return []
+  }
+}
+
 export async function searchTickers(query: string): Promise<Array<{ ticker: string; name: string; type: string; exchange: string }>> {
   const key = `search:${query.toLowerCase()}`
   const cached = getCached<Array<{ ticker: string; name: string; type: string; exchange: string }>>(key)
@@ -222,4 +284,44 @@ export async function searchTickers(query: string): Promise<Array<{ ticker: stri
   } catch {
     return []
   }
+}
+
+export async function getNewsForTickers(tickers: string[], perTicker = 2): Promise<MarketHeadline[]> {
+  const uniqueTickers = Array.from(new Set(tickers.map((t) => t.toUpperCase()))).slice(0, 8)
+  const allHeadlines: MarketHeadline[] = []
+
+  await mapWithConcurrency(uniqueTickers, async (ticker) => {
+    const key = `news:${ticker}`
+    const cached = getCached<MarketHeadline[]>(key)
+    if (cached) {
+      allHeadlines.push(...cached.slice(0, perTicker))
+      return
+    }
+
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const searchResult: any = await withTimeout(yahooFinance.search(ticker), 3500)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const newsItems = Array.isArray(searchResult?.news) ? searchResult.news as any[] : []
+      const mapped = newsItems.slice(0, perTicker).map((item) => {
+        const publishedAt = typeof item?.providerPublishTime === 'number'
+          ? new Date(item.providerPublishTime * 1000).toISOString()
+          : null
+        return {
+          ticker,
+          title: item?.title || `Latest update on ${ticker}`,
+          url: item?.link || item?.canonicalUrl?.url || '',
+          publisher: item?.publisher || null,
+          published_at: publishedAt,
+        } as MarketHeadline
+      }).filter((item) => item.url.length > 0)
+
+      setCache(key, mapped)
+      allHeadlines.push(...mapped)
+    } catch {
+      // Silent fallback: some tickers may not have fresh feed items.
+    }
+  }, 4)
+
+  return allHeadlines
 }

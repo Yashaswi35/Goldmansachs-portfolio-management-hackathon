@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { openai } from '@/lib/openai/client'
 import { createClient } from '@/lib/supabase/server'
+import { getOrBuildUserAiContext } from '@/lib/personalization/user-context'
 
 export async function POST() {
   const supabase = await createClient()
@@ -66,6 +67,12 @@ Return ONLY a JSON object: {"ips": "...", "target_stock_pct": ${targetStocks}, "
     target_bond_pct: result.target_bond_pct || targetBonds,
     target_cash_pct: result.target_cash_pct || targetCash,
   }).eq('id', user.id)
+
+  await getOrBuildUserAiContext({
+    supabase,
+    userId: user.id,
+    forceRefresh: true,
+  })
 
   return NextResponse.json({
     investment_policy_statement: result.ips,

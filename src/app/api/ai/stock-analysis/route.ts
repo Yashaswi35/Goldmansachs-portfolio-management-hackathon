@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { openai } from '@/lib/openai/client'
 import { createClient } from '@/lib/supabase/server'
-import { getFundamentalsForTickers, getQuotes } from '@/lib/market-data/yahoo'
+import { getFundamentalsForTickers } from '@/lib/market-data/yahoo'
+import { buildPersonalizedPolicy } from '@/lib/personalization/policy'
+import { applyStockAnalysisCompliance } from '@/lib/personalization/compliance'
+import { getOrBuildUserAiContext } from '@/lib/personalization/user-context'
 
 export interface StockAnalysis {
   ticker: string
@@ -19,16 +22,6 @@ export interface StockAnalysis {
 
 const analysisCache = new Map<string, { data: StockAnalysis[]; ts: number }>()
 const CACHE_TTL = 10 * 60 * 1000
-
-type HoldingRow = {
-  id: string
-  ticker: string
-  shares: number
-  avg_cost_basis: number
-  company_name?: string | null
-  sector?: string | null
-  asset_type?: string | null
-}
 
 type EnrichedHolding = {
   id: string
@@ -140,16 +133,30 @@ export async function POST(request: NextRequest) {
 
   const { portfolio_id } = await request.json()
 
-  const [profileRes, holdingsRes] = await Promise.all([
-    supabase.from('profiles').select('*').eq('id', user.id).single(),
-    supabase.from('holdings').select('*').eq('portfolio_id', portfolio_id),
-  ])
-
-  const profile = profileRes.data
-  const holdings = (holdingsRes.data || []) as HoldingRow[]
+  const userContext = await getOrBuildUserAiContext({
+    supabase,
+    userId: user.id,
+    portfolioId: portfolio_id,
+  })
+  const profile = userContext.profile
+  const holdings = userContext.holdings
   if (!holdings.length) return NextResponse.json([])
 
-  const cacheKey = `${user.id}-${portfolio_id}-${holdings
+  const profileFingerprint = [
+    profile?.risk_archetype,
+    profile?.risk_tolerance,
+    profile?.investment_goal,
+    profile?.investment_horizon,
+    profile?.age,
+    profile?.emergency_fund,
+    profile?.debt_type,
+    profile?.experience_level,
+    profile?.target_stock_pct,
+    profile?.target_bond_pct,
+    profile?.target_cash_pct,
+  ].join('|')
+
+  const cacheKey = `${user.id}-${portfolio_id}-${profileFingerprint}-${holdings
     .map((h) => `${h.id}:${h.shares}:${h.avg_cost_basis}`)
     .sort()
     .join('|')}`
@@ -157,25 +164,20 @@ export async function POST(request: NextRequest) {
   if (cached && Date.now() - cached.ts < CACHE_TTL) return NextResponse.json(cached.data)
 
   const tickers = holdings.map((h) => h.ticker)
-  const [quotes, fundamentalsByTicker] = await Promise.all([
-    getQuotes(tickers),
-    getFundamentalsForTickers(tickers),
-  ])
+  const fundamentalsByTicker = await getFundamentalsForTickers(tickers)
 
-  let totalValue = 0
+  const totalValue = userContext.total_value
   const enriched: EnrichedHolding[] = holdings.map((h) => {
-    const q = quotes[h.ticker.toUpperCase()]
     const fundamentals = fundamentalsByTicker[h.ticker.toUpperCase()]
-    const price = q?.current_price ?? h.avg_cost_basis
-    const value = price * h.shares
-    totalValue += value
-    const gainLossPct = h.avg_cost_basis > 0 ? ((price - h.avg_cost_basis) / h.avg_cost_basis) * 100 : 0
+    const price = h.current_price
+    const value = h.current_value
+    const gainLossPct = h.gain_loss_pct
 
     return {
       id: h.id,
       ticker: h.ticker,
       company: h.company_name || h.ticker,
-      sector: h.sector || fundamentals?.sector || q?.sector || 'Unknown',
+      sector: h.sector || fundamentals?.sector || 'Unknown',
       industry: fundamentals?.industry || null,
       assetType: h.asset_type || 'stock',
       shares: h.shares,
@@ -183,9 +185,9 @@ export async function POST(request: NextRequest) {
       currentPrice: price,
       currentValue: value,
       gainLossPct,
-      dailyChangePct: toNum(q?.daily_change_pct),
-      allocationPct: 0,
-      peRatio: fundamentals?.pe_ratio ?? q?.pe_ratio ?? null,
+      dailyChangePct: toNum(h.daily_change_pct),
+      allocationPct: h.allocation_pct,
+      peRatio: fundamentals?.pe_ratio ?? null,
       forwardPe: fundamentals?.forward_pe ?? null,
       beta: fundamentals?.beta ?? null,
       dividendYieldPct: fundamentals?.dividend_yield_pct ?? null,
@@ -193,18 +195,15 @@ export async function POST(request: NextRequest) {
       revenueGrowthPct: fundamentals?.revenue_growth_pct ?? null,
       debtToEquity: fundamentals?.debt_to_equity ?? null,
       returnOnEquityPct: fundamentals?.return_on_equity_pct ?? null,
-      marketCap: fundamentals?.market_cap ?? q?.market_cap ?? null,
+      marketCap: fundamentals?.market_cap ?? null,
       recommendation: fundamentals?.recommendation ?? null,
       targetMeanPrice: fundamentals?.target_mean_price ?? null,
-      fiftyTwoWeekHigh: fundamentals?.fifty_two_week_high ?? q?.fifty_two_week_high ?? null,
-      fiftyTwoWeekLow: fundamentals?.fifty_two_week_low ?? q?.fifty_two_week_low ?? null,
+      fiftyTwoWeekHigh: fundamentals?.fifty_two_week_high ?? null,
+      fiftyTwoWeekLow: fundamentals?.fifty_two_week_low ?? null,
     }
   })
-
-  enriched.forEach((h) => {
-    h.allocationPct = totalValue > 0 ? (h.currentValue / totalValue) * 100 : 0
-  })
-  const riskLabel = profile?.risk_archetype || profile?.risk_tolerance || 'moderate'
+  const policy = buildPersonalizedPolicy(profile)
+  const riskLabel = policy.risk_bucket
 
   const prompt = `You are a senior financial advisor analyzing a beginner investor's portfolio. Be specific, honest, and use plain English — no jargon without explanation. Be warm but direct. Flag real risks clearly.
 
@@ -218,6 +217,13 @@ USER INVESTMENT PROFILE:
 - Experience: ${profile?.experience_level || 'beginner'}
 - Dependents: ${profile?.num_dependents || 0}
 ${profile?.investment_policy_statement ? `IPS: ${profile.investment_policy_statement}` : ''}
+
+PERSONALIZED POLICY CONSTRAINTS (NON-NEGOTIABLE):
+- Risk bucket: ${policy.risk_bucket}
+- Target stock range: ${policy.target_stock_min_pct}-${policy.target_stock_max_pct}%
+- Target bond range: ${policy.target_bond_min_pct}-${policy.target_bond_max_pct}%
+- Max single position: ${policy.max_single_position_pct}%
+- Max sector concentration: ${policy.max_sector_pct}%
 
 PORTFOLIO (Total: $${totalValue.toFixed(2)}):
 ${JSON.stringify(enriched, null, 2)}
@@ -280,6 +286,7 @@ Critical: Use each holding's ticker exactly as provided in the input when genera
     return buildFallbackAnalysis(h, riskLabel)
   })
 
-  analysisCache.set(cacheKey, { data: merged, ts: Date.now() })
-  return NextResponse.json(merged)
+  const compliant = applyStockAnalysisCompliance(merged)
+  analysisCache.set(cacheKey, { data: compliant, ts: Date.now() })
+  return NextResponse.json(compliant)
 }
